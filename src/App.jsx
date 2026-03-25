@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload, Link } from 'lucide-react';
+import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload, Link, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 
 const adminQuestions = [
   "Satuan pendidikan memiliki Nomor Pokok Sekolah Nasional (NPSN) yang aktif dan sinkron.",
@@ -36,6 +36,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingServer, setIsFetchingServer] = useState(false);
+  const [activeTab, setActiveTab] = useState('Bagian I'); // State Tab Aktif
   
   const initialData = {
     profil: {
@@ -117,6 +118,39 @@ export default function App() {
     setFormData({ ...formData, kesimpulan: { ...formData.kesimpulan, [e.target.name]: e.target.value } });
   };
 
+  // --- LOGIKA VALIDASI TAB ---
+  const isSectionComplete = (section) => {
+    switch (section) {
+      case 'Bagian I':
+        if (formData.profil.npsn.length !== 8) return false;
+        for (let key in formData.profil) {
+          if (formData.profil[key].trim() === '') return false;
+        }
+        return true;
+      case 'Bagian II.A':
+        return formData.administrasi.every(item => item.status !== '');
+      case 'Bagian II.B':
+        return formData.lahan.every(item => item.status !== '');
+      case 'Bagian II.C':
+        const keysDigi = ['rombelDapodik', 'rombelFakta', 'ruangDapodik', 'ruangFakta', 'analisisIfp', 'rekomendasiIfp', 'listrikDaya', 'listrikAsumsi', 'listrikKesimpulan', 'internetStatus', 'internetProvider', 'ruangKondisiOpsi', 'ruangKesimpulan'];
+        const isBasicFilled = keysDigi.every(k => formData.digitalisasi[k].trim() !== '');
+        const isOpsiLainnyaFilled = formData.digitalisasi.ruangKondisiOpsi === 'Lainnya' ? formData.digitalisasi.ruangKondisi.trim() !== '' : true;
+        return isBasicFilled && isOpsiLainnyaFilled;
+      case 'Bagian III':
+        for (let key in formData.kesimpulan) {
+          if (formData.kesimpulan[key].trim() === '') return false;
+        }
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const validateForm = () => {
+    return ['Bagian I', 'Bagian II.A', 'Bagian II.B', 'Bagian II.C', 'Bagian III'].every(tab => isSectionComplete(tab));
+  };
+  // ---------------------------
+
   const handleSaveDraft = () => {
     const npsn = formData.profil.npsn.trim();
     if (!npsn) { alert("NPSN wajib diisi untuk menyimpan draft!"); return; }
@@ -159,24 +193,9 @@ export default function App() {
     }
   };
 
-  const validateForm = () => {
-    if (formData.profil.npsn.length !== 8) {
-      alert("PENGIRIMAN GAGAL: NPSN harus terdiri dari tepat 8 digit angka.");
-      return false;
-    }
-    for (let key in formData.profil) { if (formData.profil[key].trim() === '') return false; }
-    if (formData.administrasi.some(item => item.status === '')) return false;
-    if (formData.lahan.some(item => item.status === '')) return false;
-    for (let key in formData.digitalisasi) { 
-      if (key !== 'ruangKondisiOpsi' && formData.digitalisasi[key].trim() === '') return false; 
-    }
-    for (let key in formData.kesimpulan) { if (formData.kesimpulan[key].trim() === '') return false; }
-    return true;
-  };
-
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert("PENGIRIMAN GAGAL: Mohon lengkapi seluruh isian form secara benar (termasuk pilihan Ya/Tidak) sebelum mengirim data.");
+      alert("PENGIRIMAN GAGAL: Mohon lengkapi seluruh isian form secara benar pada setiap tab sebelum mengirim data.");
       return;
     }
     setIsLoading(true);
@@ -202,6 +221,8 @@ export default function App() {
       alert("Gunakan CTRL + P (Windows) atau CMD + P (Mac) untuk mencetak dokumen ini.");
     }
   };
+
+  const tabs = ['Bagian I', 'Bagian II.A', 'Bagian II.B', 'Bagian II.C', 'Bagian III'];
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} p-4 md:p-8 font-sans relative z-0`}>
@@ -233,10 +254,39 @@ export default function App() {
           <h2 className="text-lg md:text-xl font-semibold text-gray-600 dark:text-gray-400 print:text-gray-800">Satuan Pendidikan Calon Penerima Bantuan Revitalisasi & Digitalisasi Tahun 2026</h2>
         </div>
 
+        {/* --- NAVIGASI TAB --- */}
+        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 print:hidden overflow-x-auto whitespace-nowrap sticky top-0 z-20 shadow-sm">
+          <div className="flex gap-2 min-w-max mx-auto max-w-5xl px-2">
+            {tabs.map((tab, idx) => {
+              const isComplete = isSectionComplete(tab);
+              const isActive = activeTab === tab;
+              
+              let btnClass = "flex items-center px-4 py-2.5 rounded-lg font-bold text-sm transition-all border-2 ";
+              
+              if (isComplete) {
+                btnClass += isActive ? "bg-[#f9a703] text-white border-[#f9a703] shadow-md" : "bg-[#f9a703]/10 text-[#d08c02] dark:text-[#f9a703] border-[#f9a703]/30 hover:bg-[#f9a703]/20";
+              } else {
+                btnClass += isActive ? "bg-[#067ac1] text-white border-[#067ac1] shadow-md" : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-transparent hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200";
+              }
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={btnClass}
+                >
+                  <span className="mr-1">{idx + 1}.</span> {tab}
+                  {isComplete && <CheckCircle size={16} className="ml-2" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="p-6 md:p-10 space-y-10">
           
           {/* BAGIAN I: PROFIL */}
-          <section>
+          <section className={`${activeTab === 'Bagian I' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian I</span>
               Profil dan Data Umum
@@ -245,7 +295,7 @@ export default function App() {
               <div>
                 <label className="block text-sm font-medium mb-1">NPSN <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Harus 8 digit angka)</span></label>
                 <div className="flex gap-2">
-                  <input type="text" name="npsn" value={formData.profil.npsn} onChange={handleProfilChange} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" placeholder="Ketik 8 digit NPSN..." />
+                  <input type="text" name="npsn" value={formData.profil.npsn} onChange={handleProfilChange} className={`w-full p-2 border ${formData.profil.npsn.length > 0 && formData.profil.npsn.length !== 8 ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'} rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]`} placeholder="Ketik 8 digit NPSN..." />
                   <div className="flex flex-col gap-1 print:hidden">
                     <button onClick={handleLoadDraft} className="flex justify-center items-center px-2 py-1 bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#067ac1]/20 dark:text-[#6cb4e4] rounded hover:bg-[#067ac1]/20 transition text-xs font-semibold" title="Cari di penyimpanan offline perangkat ini">
                       <Search size={14} className="mr-1" /> Draft Lokal
@@ -282,10 +332,16 @@ export default function App() {
                 </div>
               ))}
             </div>
+            {/* Tombol Selanjutnya (Bawah) */}
+            <div className="flex justify-end mt-8 print:hidden">
+              <button onClick={() => setActiveTab('Bagian II.A')} className="flex items-center px-6 py-2.5 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-bold shadow-md">
+                Lanjut ke Bagian II.A <ChevronRight size={20} className="ml-1" />
+              </button>
+            </div>
           </section>
 
-          {/* BAGIAN II.A & II.B */}
-          <section>
+          {/* BAGIAN II.A */}
+          <section className={`${activeTab === 'Bagian II.A' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.A</span>
               Kelayakan Administrasi Umum <span className="text-red-500 ml-1">*</span>
@@ -307,10 +363,10 @@ export default function App() {
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">{idx + 1}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 align-top pr-4">{q}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">
-                        <input type="radio" name={`admin-${idx}`} checked={formData.administrasi[idx].status === 'Ya'} onChange={() => handleArrayChange('administrasi', idx, 'status', 'Ya')} className="w-4 h-4 text-[#067ac1] focus:ring-[#067ac1] dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
+                        <input type="radio" name={`admin-${idx}`} checked={formData.administrasi[idx].status === 'Ya'} onChange={() => handleArrayChange('administrasi', idx, 'status', 'Ya')} className="w-5 h-5 text-[#067ac1] focus:ring-[#067ac1] dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
                       </td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">
-                        <input type="radio" name={`admin-${idx}`} checked={formData.administrasi[idx].status === 'Tidak'} onChange={() => handleArrayChange('administrasi', idx, 'status', 'Tidak')} className="w-4 h-4 text-red-600 focus:ring-red-500 dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
+                        <input type="radio" name={`admin-${idx}`} checked={formData.administrasi[idx].status === 'Tidak'} onChange={() => handleArrayChange('administrasi', idx, 'status', 'Tidak')} className="w-5 h-5 text-red-600 focus:ring-red-500 dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
                       </td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 align-top">
                         <textarea value={formData.administrasi[idx].keterangan} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 min-h-[100px] resize-y focus:ring-[#067ac1] focus:border-[#067ac1]" placeholder="Detail keterangan..." onChange={(e) => handleArrayChange('administrasi', idx, 'keterangan', e.target.value)}></textarea>
@@ -320,9 +376,18 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+            <div className="flex justify-between mt-8 print:hidden">
+              <button onClick={() => setActiveTab('Bagian I')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                <ChevronLeft size={20} className="mr-1" /> Kembali
+              </button>
+              <button onClick={() => setActiveTab('Bagian II.B')} className="flex items-center px-6 py-2.5 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-bold shadow-md">
+                Lanjut ke Bagian II.B <ChevronRight size={20} className="ml-1" />
+              </button>
+            </div>
           </section>
 
-          <section>
+          {/* BAGIAN II.B */}
+          <section className={`${activeTab === 'Bagian II.B' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
              <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.B</span>
               Lahan, Tata Ruang, dan Swakelola <span className="text-red-500 ml-1">*</span>
@@ -344,10 +409,10 @@ export default function App() {
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">{idx + 1}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 align-top pr-4">{q}</td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">
-                        <input type="radio" name={`lahan-${idx}`} checked={formData.lahan[idx].status === 'Ya'} onChange={() => handleArrayChange('lahan', idx, 'status', 'Ya')} className="w-4 h-4 text-[#067ac1] focus:ring-[#067ac1] dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
+                        <input type="radio" name={`lahan-${idx}`} checked={formData.lahan[idx].status === 'Ya'} onChange={() => handleArrayChange('lahan', idx, 'status', 'Ya')} className="w-5 h-5 text-[#067ac1] focus:ring-[#067ac1] dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
                       </td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 text-center align-top">
-                        <input type="radio" name={`lahan-${idx}`} checked={formData.lahan[idx].status === 'Tidak'} onChange={() => handleArrayChange('lahan', idx, 'status', 'Tidak')} className="w-4 h-4 text-red-600 focus:ring-red-500 dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
+                        <input type="radio" name={`lahan-${idx}`} checked={formData.lahan[idx].status === 'Tidak'} onChange={() => handleArrayChange('lahan', idx, 'status', 'Tidak')} className="w-5 h-5 text-red-600 focus:ring-red-500 dark:bg-gray-600 dark:border-gray-500 cursor-pointer" />
                       </td>
                       <td className="border border-gray-300 dark:border-gray-600 p-2 align-top">
                         <textarea value={formData.lahan[idx].keterangan} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 min-h-[100px] resize-y focus:ring-[#067ac1] focus:border-[#067ac1]" placeholder="Catatan kondisi..." onChange={(e) => handleArrayChange('lahan', idx, 'keterangan', e.target.value)}></textarea>
@@ -357,10 +422,18 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+            <div className="flex justify-between mt-8 print:hidden">
+              <button onClick={() => setActiveTab('Bagian II.A')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                <ChevronLeft size={20} className="mr-1" /> Kembali
+              </button>
+              <button onClick={() => setActiveTab('Bagian II.C')} className="flex items-center px-6 py-2.5 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-bold shadow-md">
+                Lanjut ke Bagian II.C <ChevronRight size={20} className="ml-1" />
+              </button>
+            </div>
           </section>
 
           {/* BAGIAN II.C */}
-          <section>
+          <section className={`${activeTab === 'Bagian II.C' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.C</span>
               Pemetaan Kebutuhan (IFP) & Kelistrikan
@@ -438,12 +511,12 @@ export default function App() {
 
                       <label className="block text-sm font-semibold mb-1">d. Kondisi Ruang Penyimpanan <span className="text-red-500">*</span></label>
                       <select name="ruangKondisiOpsi" value={formData.digitalisasi.ruangKondisiOpsi} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleRuangKondisiOpsi}>
-                        <option value="">-- Pilih Fasilitas Keamanan Keamanan --</option>
+                        <option value="">-- Pilih Fasilitas Keamanan --</option>
                         <option value="Gembok Ganda & Teralis Besi">Gembok Ganda & Teralis Besi</option>
                         <option value="Atap Aman (Tidak Bocor/Rawan)">Atap Aman (Tidak Bocor/Rawan)</option>
                         <option value="Terdapat CCTV Aktif">Terdapat CCTV Aktif</option>
                         <option value="Dijaga Penjaga Sekolah / Satpam">Dijaga Penjaga Sekolah / Satpam</option>
-                        <option value="Kombinasi (Gembok, Teralis, CCTV, Satpam)">Kombinasi Lengkap (Gembok, Teralis, CCTV, Satpam)</option>
+                        <option value="Kombinasi Lengkap (Gembok, Teralis, CCTV, Satpam)">Kombinasi Lengkap (Gembok, Teralis, CCTV, Satpam)</option>
                         <option value="Lainnya">Lainnya (Isi Manual)</option>
                       </select>
                       {formData.digitalisasi.ruangKondisiOpsi === 'Lainnya' && (
@@ -460,10 +533,18 @@ export default function App() {
                  </div>
               </div>
             </div>
+            <div className="flex justify-between mt-8 print:hidden">
+              <button onClick={() => setActiveTab('Bagian II.B')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                <ChevronLeft size={20} className="mr-1" /> Kembali
+              </button>
+              <button onClick={() => setActiveTab('Bagian III')} className="flex items-center px-6 py-2.5 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-bold shadow-md">
+                Lanjut ke Bagian III <ChevronRight size={20} className="ml-1" />
+              </button>
+            </div>
           </section>
 
           {/* BAGIAN III */}
-          <section className="bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner">
+          <section className={`${activeTab === 'Bagian III' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'} bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner`}>
             <h3 className="text-xl font-bold pb-2 mb-4 flex items-center border-b-2 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1] text-white dark:bg-[#f9a703] dark:text-gray-900 px-3 py-1 rounded mr-3 text-sm">Bagian III</span>
               Catatan Kendala & Rekomendasi
@@ -509,6 +590,12 @@ export default function App() {
                <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Catatan Khusus Kesimpulan: <span className="text-red-500">*</span></label>
                <textarea name="catatanKelayakan" value={formData.kesimpulan.catatanKelayakan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-600 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Berikan penjelasan atau syarat tambahan atas kesimpulan yang dipilih..."></textarea>
             </div>
+            
+            <div className="flex justify-start mt-8 print:hidden">
+              <button onClick={() => setActiveTab('Bagian II.C')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
+                <ChevronLeft size={20} className="mr-1" /> Kembali ke Bagian II.C
+              </button>
+            </div>
           </section>
 
         </div>
@@ -522,7 +609,7 @@ export default function App() {
         )}
 
         {/* Floating Actions */}
-        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-wrap justify-end gap-3 print:hidden sticky bottom-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10">
+        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-wrap justify-end gap-3 print:hidden sticky bottom-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30">
           <p className="w-full text-right text-xs text-gray-500 dark:text-gray-400 mb-1">Untuk mencetak, tekan <kbd className="bg-gray-200 dark:bg-gray-600 px-1 rounded">CTRL+P</kbd> jika tombol terblokir.</p>
           <button onClick={handleSaveDraft} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition font-medium disabled:opacity-50">
             <Save size={18} className="mr-2" /> Simpan Draft
