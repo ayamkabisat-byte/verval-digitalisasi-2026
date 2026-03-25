@@ -17,6 +17,18 @@ const lahanQuestions = [
   "Aksesibilitas distribusi logistik: Lebar jalan masuk (Kelas Jalan) memadai untuk dilalui kendaraan angkut material/truk pengiriman barang elektronik."
 ];
 
+const wilayahMap = {
+  "Jawa Barat": ["Kota Bekasi", "Kab. Ciamis"],
+  "Jawa Tengah": ["Kab. Klaten", "Kab. Wonosobo"],
+  "Jawa Timur": ["Kab. Ngawi"],
+  "Kalimantan Barat": ["Kab. Sambas"],
+  "Kepulauan Bangka Belitung": ["Kab. Belitung"],
+  "Papua Barat Daya": ["Kab. Sorong"],
+  "Sulawesi Tengah": ["Kab. Donggala"]
+};
+
+const provinsiList = Object.keys(wilayahMap);
+
 // URL Script Google
 const scriptURL = 'https://script.google.com/macros/s/AKfycbxoC2TjU71W1ya6xL7b47zx8zUqg8ipy9nuXjwDaTJzSTmSX1IAf0g6PgDbl9hzsKU9KQ/exec';
 
@@ -64,11 +76,23 @@ export default function App() {
 
   const handleProfilChange = (e) => {
     let value = e.target.value;
+    const name = e.target.name;
+    
     // Validasi NPSN: Hanya angka dan maksimal 8 digit saat diketik
-    if (e.target.name === 'npsn') {
+    if (name === 'npsn') {
       value = value.replace(/[^0-9]/g, '').slice(0, 8);
     }
-    setFormData({ ...formData, profil: { ...formData.profil, [e.target.name]: value } });
+    
+    setFormData(prev => {
+      const newProfil = { ...prev.profil, [name]: value };
+      
+      // Jika provinsi diubah, otomatis kosongkan pilihan kabupaten
+      if (name === 'provinsi') {
+        newProfil.kabupaten = '';
+      }
+      
+      return { ...prev, profil: newProfil };
+    });
   };
 
   const handleArrayChange = (category, index, field, value) => {
@@ -197,8 +221,8 @@ export default function App() {
           </button>
           
           <div className="flex justify-center mb-6">
-             <img src={isDarkMode ? "/Header Itjen Kemendikdasmen Dark.png" : "/Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain print:hidden" />
-             <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain hidden print:block" />
+             <img src={isDarkMode ? "/Header Itjen Kemendikdasmen Dark.png" : "/Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-24 md:h-32 lg:h-36 object-contain print:hidden" />
+             <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-24 md:h-32 lg:h-36 object-contain hidden print:block" />
           </div>
 
           <h1 className="text-2xl md:text-3xl font-bold mb-1 uppercase text-[#067ac1] dark:text-[#f9a703] print:text-black">Instrumen Verifikasi Kesiapan</h1>
@@ -233,8 +257,8 @@ export default function App() {
               {[
                 { label: 'Nama Satuan Pendidikan', name: 'namaSekolah', type: 'text' },
                 { label: 'Jenjang Pendidikan', name: 'jenjang', type: 'select', options: ['PAUD', 'SD', 'SMP', 'SMA'] },
-                { label: 'Provinsi', name: 'provinsi', type: 'text' },
-                { label: 'Kabupaten / Kota', name: 'kabupaten', type: 'text' },
+                { label: 'Provinsi', name: 'provinsi', type: 'select', options: provinsiList },
+                { label: 'Kabupaten / Kota', name: 'kabupaten', type: 'select', options: formData.profil.provinsi ? wilayahMap[formData.profil.provinsi] : [] },
                 { label: 'Alamat Lengkap', name: 'alamat', type: 'text', colSpan: true },
                 { label: 'Nama Kepala Sekolah', name: 'namaKepsek', type: 'text' },
                 { label: 'No. HP / WhatsApp Kepala Sekolah', name: 'hpKepsek', type: 'text' },
