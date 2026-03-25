@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload } from 'lucide-react';
+import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload, Link } from 'lucide-react';
 
 const adminQuestions = [
   "Satuan pendidikan memiliki Nomor Pokok Sekolah Nasional (NPSN) yang aktif dan sinkron.",
@@ -37,35 +37,38 @@ export default function App() {
       analisisIfp: '', rekomendasiIfp: '',
       listrikDaya: '', listrikAsumsi: '', listrikKesimpulan: '',
       internetStatus: '', internetProvider: '',
-      ruangKondisi: '', ruangKesimpulan: ''
+      ruangKondisiOpsi: '', ruangKondisi: '', ruangKesimpulan: ''
     },
     kesimpulan: {
-      catatanAdmin: '', catatanListrik: '', catatanKeamanan: '', catatanPemanfaatan: '', statusKelayakan: '', catatanKelayakan: ''
+      catatanAdmin: '', catatanListrik: '', catatanKeamanan: '', catatanPemanfaatan: '', statusKelayakan: '', catatanKelayakan: '', linkDrive: ''
     }
   };
 
   const [formData, setFormData] = useState(initialData);
 
   useEffect(() => {
-    // Toggle Dark Mode
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
 
-    // Set Favicon secara dinamis
     let link = document.querySelector("link[rel~='icon']");
     if (!link) {
       link = document.createElement('link');
       link.rel = 'icon';
       document.getElementsByTagName('head')[0].appendChild(link);
     }
-    link.href = 'favicon.png';
+    link.href = '/favicon.png';
   }, [isDarkMode]);
 
   const handleProfilChange = (e) => {
-    setFormData({ ...formData, profil: { ...formData.profil, [e.target.name]: e.target.value } });
+    let value = e.target.value;
+    // Validasi NPSN: Hanya angka dan maksimal 8 digit saat diketik
+    if (e.target.name === 'npsn') {
+      value = value.replace(/[^0-9]/g, '').slice(0, 8);
+    }
+    setFormData({ ...formData, profil: { ...formData.profil, [e.target.name]: value } });
   };
 
   const handleArrayChange = (category, index, field, value) => {
@@ -76,6 +79,19 @@ export default function App() {
 
   const handleDigiChange = (e) => {
     setFormData({ ...formData, digitalisasi: { ...formData.digitalisasi, [e.target.name]: e.target.value } });
+  };
+
+  const handleRuangKondisiOpsi = (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      digitalisasi: {
+        ...prev.digitalisasi,
+        ruangKondisiOpsi: value,
+        // Jika pilih selain "Lainnya", langsung jadikan sebagai nilai ruangKondisi
+        ruangKondisi: value !== 'Lainnya' ? value : '' 
+      }
+    }));
   };
 
   const handleKesimpulanChange = (e) => {
@@ -125,17 +141,25 @@ export default function App() {
   };
 
   const validateForm = () => {
+    // Validasi ketat NPSN
+    if (formData.profil.npsn.length !== 8) {
+      alert("PENGIRIMAN GAGAL: NPSN harus terdiri dari tepat 8 digit angka.");
+      return false;
+    }
     for (let key in formData.profil) { if (formData.profil[key].trim() === '') return false; }
     if (formData.administrasi.some(item => item.status === '')) return false;
     if (formData.lahan.some(item => item.status === '')) return false;
-    for (let key in formData.digitalisasi) { if (formData.digitalisasi[key].trim() === '') return false; }
+    for (let key in formData.digitalisasi) { 
+      // Skip validasi ruangKondisiOpsi jika ruangKondisi sudah terisi
+      if (key !== 'ruangKondisiOpsi' && formData.digitalisasi[key].trim() === '') return false; 
+    }
     for (let key in formData.kesimpulan) { if (formData.kesimpulan[key].trim() === '') return false; }
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert("PENGIRIMAN GAGAL: Mohon lengkapi seluruh isian form (termasuk pilihan Ya/Tidak) sebelum mengirim data.");
+      alert("PENGIRIMAN GAGAL: Mohon lengkapi seluruh isian form secara benar (termasuk pilihan Ya/Tidak) sebelum mengirim data.");
       return;
     }
     setIsLoading(true);
@@ -166,17 +190,15 @@ export default function App() {
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} p-4 md:p-8 font-sans`}>
       <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden print:shadow-none print:w-full transition-colors duration-300 relative border-t-8 border-[#f9a703]">
         
-        {/* Header Kustom Dinamis */}
+        {/* Header */}
         <div className="bg-white dark:bg-gray-900 p-6 text-center print:bg-white print:text-black border-b border-gray-200 dark:border-gray-700 print:border-b-2 print:border-black relative">
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition print:hidden text-[#067ac1] dark:text-[#f9a703]" title="Toggle Dark Mode">
             {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </button>
           
           <div className="flex justify-center mb-6">
-             {/* Menampilkan Header sesuai tema */}
-             <img src={isDarkMode ? "Header Itjen Kemendikdasmen Dark.png" : "Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain print:hidden" />
-             {/* Versi cetak selalu menggunakan versi terang agar hemat tinta */}
-             <img src="Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain hidden print:block" />
+             <img src={isDarkMode ? "/Header Itjen Kemendikdasmen Dark.png" : "/Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain print:hidden" />
+             <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-16 md:h-20 object-contain hidden print:block" />
           </div>
 
           <h1 className="text-2xl md:text-3xl font-bold mb-1 uppercase text-[#067ac1] dark:text-[#f9a703] print:text-black">Instrumen Verifikasi Kesiapan</h1>
@@ -193,9 +215,9 @@ export default function App() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">NPSN <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium mb-1">NPSN <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Harus 8 digit angka)</span></label>
                 <div className="flex gap-2">
-                  <input type="text" name="npsn" value={formData.profil.npsn} onChange={handleProfilChange} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" placeholder="Ketik NPSN..." />
+                  <input type="text" name="npsn" value={formData.profil.npsn} onChange={handleProfilChange} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" placeholder="Ketik 8 digit NPSN..." />
                   <div className="flex flex-col gap-1 print:hidden">
                     <button onClick={handleLoadDraft} className="flex justify-center items-center px-2 py-1 bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#067ac1]/20 dark:text-[#6cb4e4] rounded hover:bg-[#067ac1]/20 transition text-xs font-semibold" title="Cari di penyimpanan offline perangkat ini">
                       <Search size={14} className="mr-1" /> Draft Lokal
@@ -234,7 +256,7 @@ export default function App() {
             </div>
           </section>
 
-          {/* BAGIAN II.A */}
+          {/* BAGIAN II.A & II.B */}
           <section>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.A</span>
@@ -272,7 +294,6 @@ export default function App() {
             </div>
           </section>
 
-          {/* BAGIAN II.B */}
           <section>
              <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.B</span>
@@ -323,7 +344,6 @@ export default function App() {
             </div>
 
             <div className="space-y-6">
-              {/* 1. Pemetaan IFP */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                  <h4 className="font-bold text-lg mb-3 text-gray-800 dark:text-gray-200">1. Pemetaan Kuota Hak IFP</h4>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -345,7 +365,6 @@ export default function App() {
                  </div>
               </div>
 
-              {/* 2. Ekosistem */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                  <h4 className="font-bold text-lg mb-3 text-gray-800 dark:text-gray-200">2. Kesiapan Ekosistem Pendukung</h4>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -390,10 +409,26 @@ export default function App() {
                       </div>
 
                       <label className="block text-sm font-semibold mb-1">d. Kondisi Ruang Penyimpanan <span className="text-red-500">*</span></label>
-                      <input type="text" name="ruangKondisi" value={formData.digitalisasi.ruangKondisi} placeholder="Penjelasan gembok/teralis/atap..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
+                      {/* Opsi Ruang Penyimpanan Terbaru */}
+                      <select name="ruangKondisiOpsi" value={formData.digitalisasi.ruangKondisiOpsi} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleRuangKondisiOpsi}>
+                        <option value="">-- Pilih Fasilitas Keamanan Keamanan --</option>
+                        <option value="Gembok Ganda & Teralis Besi">Gembok Ganda & Teralis Besi</option>
+                        <option value="Atap Aman (Tidak Bocor/Rawan)">Atap Aman (Tidak Bocor/Rawan)</option>
+                        <option value="Terdapat CCTV Aktif">Terdapat CCTV Aktif</option>
+                        <option value="Dijaga Penjaga Sekolah / Satpam">Dijaga Penjaga Sekolah / Satpam</option>
+                        <option value="Kombinasi (Gembok, Teralis, CCTV, Satpam)">Kombinasi Lengkap (Gembok, Teralis, CCTV, Satpam)</option>
+                        <option value="Lainnya">Lainnya (Isi Manual)</option>
+                      </select>
+                      {/* Input Manual jika memilih Lainnya */}
+                      {formData.digitalisasi.ruangKondisiOpsi === 'Lainnya' && (
+                        <input type="text" name="ruangKondisi" value={formData.digitalisasi.ruangKondisi} placeholder="Ketik manual kondisi keamanan..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
+                      )}
+
                       <select name="ruangKesimpulan" value={formData.digitalisasi.ruangKesimpulan} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleDigiChange}>
                         <option value="">-- Kesimpulan Ruang --</option>
-                        <option value="Sangat Aman">Sangat Aman</option>
+                        {/* Pilihan Kesimpulan Ruang Terbaru */}
+                        <option value="Aman">Aman</option>
+                        <option value="Cukup">Cukup</option>
                         <option value="Rawan">Rawan</option>
                       </select>
                     </div>
@@ -427,6 +462,15 @@ export default function App() {
                 <label className="block text-sm font-medium mb-1">d. Aspek Pemanfaatan bantuan yang sudah diterima: <span className="text-red-500">*</span></label>
                 <textarea name="catatanPemanfaatan" value={formData.kesimpulan.catatanPemanfaatan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan pemanfaatan bantuan... (Isi '-' jika tidak ada)"></textarea>
               </div>
+              {/* Kolom Link Google Drive Baru */}
+              <div>
+                <label className="block text-sm font-medium mb-1 flex items-center">
+                   <Link size={16} className="mr-2 text-[#067ac1] dark:text-[#f9a703]" />
+                   e. Tautan (Link) G-Drive Dokumentasi Bukti Fisik: <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input type="url" name="linkDrive" value={formData.kesimpulan.linkDrive} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleKesimpulanChange} placeholder="https://drive.google.com/drive/folders/..." />
+                <p className="text-xs text-gray-500 mt-1">Pastikan akses link Google Drive telah diubah menjadi "Siapa saja yang memiliki tautan (Anyone with the link)".</p>
+              </div>
             </div>
 
             <div className="mb-4 bg-white dark:bg-gray-700 p-5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm">
@@ -453,7 +497,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Floating Actions (Hidden on Print) */}
+        {/* Floating Actions */}
         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-wrap justify-end gap-3 print:hidden sticky bottom-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10">
           <p className="w-full text-right text-xs text-gray-500 dark:text-gray-400 mb-1">Untuk mencetak, tekan <kbd className="bg-gray-200 dark:bg-gray-600 px-1 rounded">CTRL+P</kbd> jika tombol terblokir.</p>
           <button onClick={handleSaveDraft} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition font-medium disabled:opacity-50">
