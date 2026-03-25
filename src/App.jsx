@@ -78,19 +78,15 @@ export default function App() {
     let value = e.target.value;
     const name = e.target.name;
     
-    // Validasi NPSN: Hanya angka dan maksimal 8 digit saat diketik
     if (name === 'npsn') {
       value = value.replace(/[^0-9]/g, '').slice(0, 8);
     }
     
     setFormData(prev => {
       const newProfil = { ...prev.profil, [name]: value };
-      
-      // Jika provinsi diubah, otomatis kosongkan pilihan kabupaten
       if (name === 'provinsi') {
         newProfil.kabupaten = '';
       }
-      
       return { ...prev, profil: newProfil };
     });
   };
@@ -112,7 +108,6 @@ export default function App() {
       digitalisasi: {
         ...prev.digitalisasi,
         ruangKondisiOpsi: value,
-        // Jika pilih selain "Lainnya", langsung jadikan sebagai nilai ruangKondisi
         ruangKondisi: value !== 'Lainnya' ? value : '' 
       }
     }));
@@ -165,7 +160,6 @@ export default function App() {
   };
 
   const validateForm = () => {
-    // Validasi ketat NPSN
     if (formData.profil.npsn.length !== 8) {
       alert("PENGIRIMAN GAGAL: NPSN harus terdiri dari tepat 8 digit angka.");
       return false;
@@ -174,7 +168,6 @@ export default function App() {
     if (formData.administrasi.some(item => item.status === '')) return false;
     if (formData.lahan.some(item => item.status === '')) return false;
     for (let key in formData.digitalisasi) { 
-      // Skip validasi ruangKondisiOpsi jika ruangKondisi sudah terisi
       if (key !== 'ruangKondisiOpsi' && formData.digitalisasi[key].trim() === '') return false; 
     }
     for (let key in formData.kesimpulan) { if (formData.kesimpulan[key].trim() === '') return false; }
@@ -211,8 +204,19 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} p-4 md:p-8 font-sans`}>
-      <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden print:shadow-none print:w-full transition-colors duration-300 relative border-t-8 border-[#f9a703]">
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} p-4 md:p-8 font-sans relative z-0`}>
+      
+      {/* Latar Belakang Pattern */}
+      <div 
+        className="fixed inset-0 z-[-1] opacity-[0.08] dark:opacity-[0.15] dark:invert pointer-events-none print:hidden"
+        style={{ 
+          backgroundImage: "url('/Pattern.png')", 
+          backgroundRepeat: 'repeat', 
+          backgroundSize: '250px' 
+        }}
+      ></div>
+
+      <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden print:shadow-none print:w-full transition-colors duration-300 relative border-t-8 border-[#f9a703] z-10 mb-8">
         
         {/* Header */}
         <div className="bg-white dark:bg-gray-900 p-6 text-center print:bg-white print:text-black border-b border-gray-200 dark:border-gray-700 print:border-b-2 print:border-black relative">
@@ -433,7 +437,6 @@ export default function App() {
                       </div>
 
                       <label className="block text-sm font-semibold mb-1">d. Kondisi Ruang Penyimpanan <span className="text-red-500">*</span></label>
-                      {/* Opsi Ruang Penyimpanan Terbaru */}
                       <select name="ruangKondisiOpsi" value={formData.digitalisasi.ruangKondisiOpsi} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleRuangKondisiOpsi}>
                         <option value="">-- Pilih Fasilitas Keamanan Keamanan --</option>
                         <option value="Gembok Ganda & Teralis Besi">Gembok Ganda & Teralis Besi</option>
@@ -443,14 +446,12 @@ export default function App() {
                         <option value="Kombinasi (Gembok, Teralis, CCTV, Satpam)">Kombinasi Lengkap (Gembok, Teralis, CCTV, Satpam)</option>
                         <option value="Lainnya">Lainnya (Isi Manual)</option>
                       </select>
-                      {/* Input Manual jika memilih Lainnya */}
                       {formData.digitalisasi.ruangKondisiOpsi === 'Lainnya' && (
                         <input type="text" name="ruangKondisi" value={formData.digitalisasi.ruangKondisi} placeholder="Ketik manual kondisi keamanan..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
                       )}
 
                       <select name="ruangKesimpulan" value={formData.digitalisasi.ruangKesimpulan} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleDigiChange}>
                         <option value="">-- Kesimpulan Ruang --</option>
-                        {/* Pilihan Kesimpulan Ruang Terbaru */}
                         <option value="Aman">Aman</option>
                         <option value="Cukup">Cukup</option>
                         <option value="Rawan">Rawan</option>
@@ -486,7 +487,6 @@ export default function App() {
                 <label className="block text-sm font-medium mb-1">d. Aspek Pemanfaatan bantuan yang sudah diterima: <span className="text-red-500">*</span></label>
                 <textarea name="catatanPemanfaatan" value={formData.kesimpulan.catatanPemanfaatan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan pemanfaatan bantuan... (Isi '-' jika tidak ada)"></textarea>
               </div>
-              {/* Kolom Link Google Drive Baru */}
               <div>
                 <label className="block text-sm font-medium mb-1 flex items-center">
                    <Link size={16} className="mr-2 text-[#067ac1] dark:text-[#f9a703]" />
@@ -534,8 +534,14 @@ export default function App() {
             <Send size={18} className="mr-2" /> {isLoading ? "Mengirim..." : "Kirim ke Google Sheets"}
           </button>
         </div>
-
       </div>
+
+      {/* Footer Copyright */}
+      <footer className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 print:hidden relative z-10 pb-4">
+        <p>Copyright &copy; 2026 by Meldi Chaniko</p>
+        <p>Mail to: <a href="mailto:meldi.chaniko@gmail.com" className="text-[#067ac1] dark:text-[#f9a703] hover:underline transition">meldi.chaniko@gmail.com</a></p>
+      </footer>
+      
     </div>
   );
 }
