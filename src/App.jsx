@@ -36,7 +36,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingServer, setIsFetchingServer] = useState(false);
-  const [activeTab, setActiveTab] = useState('Bagian I'); // State Tab Aktif
+  const [activeTab, setActiveTab] = useState('Bagian I'); 
   
   const initialData = {
     profil: {
@@ -118,7 +118,6 @@ export default function App() {
     setFormData({ ...formData, kesimpulan: { ...formData.kesimpulan, [e.target.name]: e.target.value } });
   };
 
-  // --- LOGIKA VALIDASI TAB ---
   const isSectionComplete = (section) => {
     switch (section) {
       case 'Bagian I':
@@ -149,7 +148,6 @@ export default function App() {
   const validateForm = () => {
     return ['Bagian I', 'Bagian II.A', 'Bagian II.B', 'Bagian II.C', 'Bagian III'].every(tab => isSectionComplete(tab));
   };
-  // ---------------------------
 
   const handleSaveDraft = () => {
     const npsn = formData.profil.npsn.trim();
@@ -225,56 +223,45 @@ export default function App() {
   const tabs = ['Bagian I', 'Bagian II.A', 'Bagian II.B', 'Bagian II.C', 'Bagian III'];
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} p-4 md:p-8 font-sans relative z-0`}>
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} print:bg-white print:text-black font-sans relative z-0`}>
       
-      {/* Latar Belakang Pattern */}
+      {/* Latar Belakang Pattern (Hanya Tampil di Web) */}
       <div 
         className="fixed inset-0 z-[-1] opacity-[0.08] dark:opacity-[0.15] dark:invert pointer-events-none print:hidden"
-        style={{ 
-          backgroundImage: "url('/Pattern.png')", 
-          backgroundRepeat: 'repeat', 
-          backgroundSize: '250px' 
-        }}
+        style={{ backgroundImage: "url('/Pattern.png')", backgroundRepeat: 'repeat', backgroundSize: '250px' }}
       ></div>
 
-      <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden print:shadow-none print:w-full transition-colors duration-300 relative border-t-8 border-[#f9a703] z-10 mb-8">
+      {/* ========================================================================= */}
+      {/* TAMPILAN WEB FORM (INTERAKTIF) - Disembunyikan saat di-print (print:hidden) */}
+      {/* ========================================================================= */}
+      <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-colors duration-300 relative border-t-8 border-[#f9a703] z-10 my-4 md:my-8 print:hidden">
         
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 p-6 text-center print:bg-white print:text-black border-b border-gray-200 dark:border-gray-700 print:border-b-2 print:border-black relative">
-          <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition print:hidden text-[#067ac1] dark:text-[#f9a703]" title="Toggle Dark Mode">
+        {/* Header Web */}
+        <div className="bg-white dark:bg-gray-900 p-6 text-center border-b border-gray-200 dark:border-gray-700 relative">
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition text-[#067ac1] dark:text-[#f9a703]" title="Toggle Dark Mode">
             {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </button>
-          
           <div className="flex justify-center mb-6">
-             <img src={isDarkMode ? "/Header Itjen Kemendikdasmen Dark.png" : "/Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-24 md:h-32 lg:h-36 object-contain print:hidden" />
-             <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-24 md:h-32 lg:h-36 object-contain hidden print:block" />
+             <img src={isDarkMode ? "/Header Itjen Kemendikdasmen Dark.png" : "/Header Itjen Kemendikdasmen.png"} alt="Header Kemendikdasmen" className="h-24 md:h-32 lg:h-36 object-contain" />
           </div>
-
-          <h1 className="text-2xl md:text-3xl font-bold mb-1 uppercase text-[#067ac1] dark:text-[#f9a703] print:text-black">Instrumen Verifikasi Kesiapan</h1>
-          <h2 className="text-lg md:text-xl font-semibold text-gray-600 dark:text-gray-400 print:text-gray-800">Satuan Pendidikan Calon Penerima Bantuan Revitalisasi & Digitalisasi Tahun 2026</h2>
+          <h1 className="text-2xl md:text-3xl font-bold mb-1 uppercase text-[#067ac1] dark:text-[#f9a703]">Instrumen Verifikasi Kesiapan</h1>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-600 dark:text-gray-400">Satuan Pendidikan Calon Penerima Bantuan Revitalisasi & Digitalisasi Tahun 2026</h2>
         </div>
 
-        {/* --- NAVIGASI TAB --- */}
-        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 print:hidden overflow-x-auto whitespace-nowrap sticky top-0 z-20 shadow-sm">
+        {/* Navigasi Tab Web */}
+        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 overflow-x-auto whitespace-nowrap sticky top-0 z-20 shadow-sm">
           <div className="flex gap-2 min-w-max mx-auto max-w-5xl px-2">
             {tabs.map((tab, idx) => {
               const isComplete = isSectionComplete(tab);
               const isActive = activeTab === tab;
-              
               let btnClass = "flex items-center px-4 py-2.5 rounded-lg font-bold text-sm transition-all border-2 ";
-              
               if (isComplete) {
                 btnClass += isActive ? "bg-[#f9a703] text-white border-[#f9a703] shadow-md" : "bg-[#f9a703]/10 text-[#d08c02] dark:text-[#f9a703] border-[#f9a703]/30 hover:bg-[#f9a703]/20";
               } else {
                 btnClass += isActive ? "bg-[#067ac1] text-white border-[#067ac1] shadow-md" : "bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-transparent hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200";
               }
-
               return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={btnClass}
-                >
+                <button key={tab} onClick={() => setActiveTab(tab)} className={btnClass}>
                   <span className="mr-1">{idx + 1}.</span> {tab}
                   {isComplete && <CheckCircle size={16} className="ml-2" />}
                 </button>
@@ -283,10 +270,11 @@ export default function App() {
           </div>
         </div>
 
+        {/* Konten Tab Web */}
         <div className="p-6 md:p-10 space-y-10">
           
-          {/* BAGIAN I: PROFIL */}
-          <section className={`${activeTab === 'Bagian I' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
+          {/* TAB 1: PROFIL */}
+          <section className={`${activeTab === 'Bagian I' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian I</span>
               Profil dan Data Umum
@@ -296,7 +284,7 @@ export default function App() {
                 <label className="block text-sm font-medium mb-1">NPSN <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Harus 8 digit angka)</span></label>
                 <div className="flex gap-2">
                   <input type="text" name="npsn" value={formData.profil.npsn} onChange={handleProfilChange} className={`w-full p-2 border ${formData.profil.npsn.length > 0 && formData.profil.npsn.length !== 8 ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'} rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]`} placeholder="Ketik 8 digit NPSN..." />
-                  <div className="flex flex-col gap-1 print:hidden">
+                  <div className="flex flex-col gap-1">
                     <button onClick={handleLoadDraft} className="flex justify-center items-center px-2 py-1 bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#067ac1]/20 dark:text-[#6cb4e4] rounded hover:bg-[#067ac1]/20 transition text-xs font-semibold" title="Cari di penyimpanan offline perangkat ini">
                       <Search size={14} className="mr-1" /> Draft Lokal
                     </button>
@@ -332,16 +320,15 @@ export default function App() {
                 </div>
               ))}
             </div>
-            {/* Tombol Selanjutnya (Bawah) */}
-            <div className="flex justify-end mt-8 print:hidden">
+            <div className="flex justify-end mt-8">
               <button onClick={() => setActiveTab('Bagian II.A')} className="flex items-center px-6 py-2.5 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-bold shadow-md">
                 Lanjut ke Bagian II.A <ChevronRight size={20} className="ml-1" />
               </button>
             </div>
           </section>
 
-          {/* BAGIAN II.A */}
-          <section className={`${activeTab === 'Bagian II.A' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
+          {/* TAB 2.A: ADMINISTRASI */}
+          <section className={`${activeTab === 'Bagian II.A' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.A</span>
               Kelayakan Administrasi Umum <span className="text-red-500 ml-1">*</span>
@@ -376,7 +363,7 @@ export default function App() {
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-between mt-8 print:hidden">
+            <div className="flex justify-between mt-8">
               <button onClick={() => setActiveTab('Bagian I')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                 <ChevronLeft size={20} className="mr-1" /> Kembali
               </button>
@@ -386,8 +373,8 @@ export default function App() {
             </div>
           </section>
 
-          {/* BAGIAN II.B */}
-          <section className={`${activeTab === 'Bagian II.B' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
+          {/* TAB 2.B: LAHAN */}
+          <section className={`${activeTab === 'Bagian II.B' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}`}>
              <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.B</span>
               Lahan, Tata Ruang, dan Swakelola <span className="text-red-500 ml-1">*</span>
@@ -422,7 +409,7 @@ export default function App() {
                 </tbody>
               </table>
             </div>
-            <div className="flex justify-between mt-8 print:hidden">
+            <div className="flex justify-between mt-8">
               <button onClick={() => setActiveTab('Bagian II.A')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                 <ChevronLeft size={20} className="mr-1" /> Kembali
               </button>
@@ -432,8 +419,8 @@ export default function App() {
             </div>
           </section>
 
-          {/* BAGIAN II.C */}
-          <section className={`${activeTab === 'Bagian II.C' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'}`}>
+          {/* TAB 2.C: DIGITALISASI */}
+          <section className={`${activeTab === 'Bagian II.C' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'}`}>
             <h3 className="text-xl font-bold border-b-2 border-gray-300 dark:border-gray-600 pb-2 mb-4 flex items-center text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1]/10 text-[#067ac1] dark:bg-[#f9a703]/20 dark:text-[#f9a703] px-3 py-1 rounded mr-3 text-sm">Bagian II.C</span>
               Pemetaan Kebutuhan (IFP) & Kelistrikan
@@ -533,7 +520,7 @@ export default function App() {
                  </div>
               </div>
             </div>
-            <div className="flex justify-between mt-8 print:hidden">
+            <div className="flex justify-between mt-8">
               <button onClick={() => setActiveTab('Bagian II.B')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                 <ChevronLeft size={20} className="mr-1" /> Kembali
               </button>
@@ -543,8 +530,8 @@ export default function App() {
             </div>
           </section>
 
-          {/* BAGIAN III */}
-          <section className={`${activeTab === 'Bagian III' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden print:block'} bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner`}>
+          {/* TAB 3: KESIMPULAN */}
+          <section className={`${activeTab === 'Bagian III' ? 'block animate-in fade-in slide-in-from-bottom-4 duration-500' : 'hidden'} bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-inner`}>
             <h3 className="text-xl font-bold pb-2 mb-4 flex items-center border-b-2 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100">
               <span className="bg-[#067ac1] text-white dark:bg-[#f9a703] dark:text-gray-900 px-3 py-1 rounded mr-3 text-sm">Bagian III</span>
               Catatan Kendala & Rekomendasi
@@ -591,7 +578,7 @@ export default function App() {
                <textarea name="catatanKelayakan" value={formData.kesimpulan.catatanKelayakan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-600 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Berikan penjelasan atau syarat tambahan atas kesimpulan yang dipilih..."></textarea>
             </div>
             
-            <div className="flex justify-start mt-8 print:hidden">
+            <div className="flex justify-start mt-8">
               <button onClick={() => setActiveTab('Bagian II.C')} className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition font-medium">
                 <ChevronLeft size={20} className="mr-1" /> Kembali ke Bagian II.C
               </button>
@@ -599,17 +586,9 @@ export default function App() {
           </section>
 
         </div>
-        
-        {/* Loading Overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-white/70 dark:bg-gray-900/70 z-20 flex flex-col justify-center items-center backdrop-blur-sm rounded-xl print:hidden">
-            <Loader2 size={48} className="text-[#067ac1] dark:text-[#f9a703] animate-spin mb-4" />
-            <p className="text-lg font-semibold text-gray-800 dark:text-gray-200">Mengirim data ke Google Sheets...</p>
-          </div>
-        )}
 
-        {/* Floating Actions */}
-        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-wrap justify-end gap-3 print:hidden sticky bottom-0 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30">
+        {/* Floating Actions Web */}
+        <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-300 dark:border-gray-700 p-4 flex flex-wrap justify-end gap-3 sticky bottom-0 z-30">
           <p className="w-full text-right text-xs text-gray-500 dark:text-gray-400 mb-1">Untuk mencetak, tekan <kbd className="bg-gray-200 dark:bg-gray-600 px-1 rounded">CTRL+P</kbd> jika tombol terblokir.</p>
           <button onClick={handleSaveDraft} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition font-medium disabled:opacity-50">
             <Save size={18} className="mr-2" /> Simpan Draft
@@ -622,8 +601,165 @@ export default function App() {
           </button>
         </div>
       </div>
+      {/* END TAMPILAN WEB */}
 
-      {/* Footer Copyright */}
+
+      {/* ========================================================================= */}
+      {/* TAMPILAN CETAK PDF (NARATIF) - Hanya tampil saat diprint (hidden print:block) */}
+      {/* ========================================================================= */}
+      <div className="hidden print:block font-serif w-full max-w-none text-black bg-white pt-4 pb-12 px-8 text-[11pt] leading-snug">
+        
+        {/* Kop Surat Dokumen Cetak */}
+        <div className="border-b-4 border-black pb-4 mb-4 text-center">
+           <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-20 mx-auto object-contain mb-3" />
+           <h1 className="text-[13pt] font-bold uppercase">INSTRUMEN VERIFIKASI KESIAPAN SATUAN PENDIDIKAN</h1>
+           <h2 className="text-[12pt] font-bold uppercase">CALON PENERIMA BANTUAN REVITALISASI & DIGITALISASI TAHUN 2026</h2>
+        </div>
+
+        {/* Bagian I - Cetak */}
+        <h3 className="font-bold text-[12pt] mb-2 uppercase">BAGIAN I: PROFIL DAN DATA UMUM SATUAN PENDIDIKAN</h3>
+        <table className="w-full mb-6 text-[11pt]">
+          <tbody>
+            <tr><td className="w-1/3 py-1 align-top">Nama Satuan Pendidikan</td><td className="w-2/3 py-1 align-top">: {formData.profil.namaSekolah || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Jenjang Pendidikan</td><td className="w-2/3 py-1 align-top">: {formData.profil.jenjang || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">NPSN</td><td className="w-2/3 py-1 align-top">: {formData.profil.npsn || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Provinsi</td><td className="w-2/3 py-1 align-top">: {formData.profil.provinsi || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Kabupaten / Kota</td><td className="w-2/3 py-1 align-top">: {formData.profil.kabupaten || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Alamat Lengkap Satuan Pendidikan</td><td className="w-2/3 py-1 align-top">: {formData.profil.alamat || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Nama Kepala Sekolah</td><td className="w-2/3 py-1 align-top">: {formData.profil.namaKepsek || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">No. HP / WhatsApp Kepala Sekolah</td><td className="w-2/3 py-1 align-top">: {formData.profil.hpKepsek || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Nama Petugas Verifikasi</td><td className="w-2/3 py-1 align-top">: {formData.profil.namaVerifikator || '..............................................................'}</td></tr>
+            <tr><td className="w-1/3 py-1 align-top">Tanggal Verifikasi</td><td className="w-2/3 py-1 align-top">: {formData.profil.tanggal || '..............................................................'}</td></tr>
+          </tbody>
+        </table>
+
+        {/* Bagian II - Cetak */}
+        <h3 className="font-bold text-[12pt] mb-1 uppercase break-before-auto">BAGIAN II: VERIFIKASI KESIAPAN SASARAN (PRA-PELAKSANAAN)</h3>
+        <p className="mb-4 text-justify">Instrumen ini diisi secara objektif oleh petugas verifikator (Dinas Pendidikan/Inspektorat/Tim Pusat) melalui observasi lapangan dan pemeriksaan dokumen pembuktian fisik sebelum penetapan SK Penerima Bantuan Tahun 2026 diterbitkan.</p>
+        
+        {/* II.A */}
+        <h4 className="font-bold mb-2">A. Kelayakan Administrasi Umum dan Ekosistem Kelembagaan</h4>
+        <table className="w-full border-collapse border border-black mb-6 text-[10pt]">
+          <thead>
+            <tr>
+              <th className="border border-black p-1.5 w-8 text-center">No</th>
+              <th className="border border-black p-1.5 w-1/2">Indikator Pemeriksaan Kelayakan Administrasi</th>
+              <th className="border border-black p-1.5 w-12 text-center">Sesuai</th>
+              <th className="border border-black p-1.5 w-12 text-center">Tidak</th>
+              <th className="border border-black p-1.5">Keterangan / Bukti</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adminQuestions.map((q, idx) => (
+              <tr key={idx} className="break-inside-avoid">
+                <td className="border border-black p-1.5 text-center align-top">{idx + 1}</td>
+                <td className="border border-black p-1.5 align-top">{q}</td>
+                <td className="border border-black p-1.5 text-center align-top font-sans font-bold">{formData.administrasi[idx].status === 'Ya' ? '✓' : ''}</td>
+                <td className="border border-black p-1.5 text-center align-top font-sans font-bold">{formData.administrasi[idx].status === 'Tidak' ? '✓' : ''}</td>
+                <td className="border border-black p-1.5 align-top">{formData.administrasi[idx].keterangan}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* II.B */}
+        <h4 className="font-bold mb-2 break-before-auto">B. Verifikasi Lahan, Tata Ruang, dan Kesiapan Swakelola (Fokus Bantuan Fisik/Revitalisasi)</h4>
+        <table className="w-full border-collapse border border-black mb-6 text-[10pt]">
+          <thead>
+            <tr>
+              <th className="border border-black p-1.5 w-8 text-center">No</th>
+              <th className="border border-black p-1.5 w-1/2">Indikator Pemeriksaan Lahan, Fisik, dan Swakelola</th>
+              <th className="border border-black p-1.5 w-12 text-center">Sesuai</th>
+              <th className="border border-black p-1.5 w-12 text-center">Tidak</th>
+              <th className="border border-black p-1.5">Analisis Kondisi Lapangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lahanQuestions.map((q, idx) => (
+              <tr key={idx} className="break-inside-avoid">
+                <td className="border border-black p-1.5 text-center align-top">{idx + 1}</td>
+                <td className="border border-black p-1.5 align-top">{q}</td>
+                <td className="border border-black p-1.5 text-center align-top font-sans font-bold">{formData.lahan[idx].status === 'Ya' ? '✓' : ''}</td>
+                <td className="border border-black p-1.5 text-center align-top font-sans font-bold">{formData.lahan[idx].status === 'Tidak' ? '✓' : ''}</td>
+                <td className="border border-black p-1.5 align-top">{formData.lahan[idx].keterangan}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* II.C (Format Naratif) */}
+        <div className="break-inside-avoid">
+           <h4 className="font-bold mb-1">C. Analisis Pemetaan Kebutuhan Digitalisasi (IFP) dan Kapasitas Infrastruktur Kelistrikan</h4>
+           <p className="italic text-[10pt] mb-3">Bagian ini wajib diisi dengan membandingkan data Dapodik dengan realitas kunjungan kelas guna menghindari over-supply bantuan digitalisasi.</p>
+           
+           <ol className="list-decimal ml-5 mb-6 space-y-3">
+             <li>
+                <span className="font-bold">Pemetaan Kuota Hak Interactive Flat Panel (IFP)</span>
+                <ul className="list-[lower-alpha] ml-5 mt-1 space-y-1">
+                   <li>Jumlah Rombongan Belajar (Rombel) yang aktif: Dapodik <span className="font-bold">({formData.digitalisasi.rombelDapodik || '...'})</span>, Fakta di Lapangan <span className="font-bold">({formData.digitalisasi.rombelFakta || '...'})</span>.</li>
+                   <li>Jumlah Ruang Kelas fisik yang tersedia dan layak: Dapodik <span className="font-bold">({formData.digitalisasi.ruangDapodik || '...'})</span>, Fakta di Lapangan <span className="font-bold">({formData.digitalisasi.ruangFakta || '...'})</span>.</li>
+                   <li>Analisis Kuota IFP Sasaran Baru 2026: <span className="font-bold">{formData.digitalisasi.analisisIfp || '..............................'}</span>.</li>
+                   <li>Rekomendasi Verifikator: <span className="font-bold">{formData.digitalisasi.rekomendasiIfp || '............................................................'}</span>.</li>
+                </ul>
+             </li>
+             <li>
+                <span className="font-bold">Kesiapan Ekosistem Pendukung Digitalisasi</span>
+                <ul className="list-[lower-alpha] ml-5 mt-1 space-y-1">
+                   <li>Kapasitas Daya Listrik Eksisting saat ini (VA): <span className="font-bold">{formData.digitalisasi.listrikDaya || '..............................'}</span>.</li>
+                   <li>Asumsi Beban Penambahan Daya berdasarkan Kuota IFP: <span className="font-bold">{formData.digitalisasi.listrikAsumsi || '..............................'}</span>.<br/>Kesimpulan: <span className="font-bold uppercase underline">{formData.digitalisasi.listrikKesimpulan || '..............................'}</span>.</li>
+                   <li>Status ketersediaan dan kestabilan Internet: <span className="font-bold">{formData.digitalisasi.internetStatus || '..............................'}</span>.<br/>Provider dan Kecepatan Uji Coba: <span className="font-bold">{formData.digitalisasi.internetProvider || '..............................'}</span>.</li>
+                   <li>Kondisi Ruang Penyimpanan Barang Digital: <span className="font-bold">{formData.digitalisasi.ruangKondisi || '..............................'}</span>.<br/>Kesimpulan Ruang: <span className="font-bold uppercase underline">{formData.digitalisasi.ruangKesimpulan || '..............................'}</span>.</li>
+                </ul>
+             </li>
+           </ol>
+        </div>
+
+        {/* Bagian III - Cetak */}
+        <div className="break-before-auto">
+           <h3 className="font-bold text-[12pt] mb-1 uppercase">BAGIAN III: CATATAN KENDALA, KESIMPULAN, DAN REKOMENDASI VERIFIKATOR</h3>
+           <p className="text-justify mb-4">Verifikator wajib menguraikan secara kualitatif terkait temuan anomali data, hambatan geografis, defisit daya listrik, potensi masalah hukum lahan, atau hal-hal spesifik lainnya yang membutuhkan perhatian khusus sebelum SK Penetapan diterbitkan.</p>
+           
+           <ol className="list-decimal ml-5 mb-6 space-y-3">
+             <li>
+                <span className="font-bold">Deskripsi Catatan Lapangan / Kendala Kesiapan Ekosistem:</span>
+                <ul className="list-[lower-alpha] ml-5 mt-2 space-y-2">
+                   <li><span className="font-semibold">Aspek Administrasi & Lahan:</span> <br/>{formData.kesimpulan.catatanAdmin || '........................................................................................................................'}</li>
+                   <li><span className="font-semibold">Aspek Kelistrikan & Jaringan:</span> <br/>{formData.kesimpulan.catatanListrik || '........................................................................................................................'}</li>
+                   <li><span className="font-semibold">Aspek Keamanan Ruang & SDM:</span> <br/>{formData.kesimpulan.catatanKeamanan || '........................................................................................................................'}</li>
+                   <li><span className="font-semibold">Aspek Pemanfaatan bantuan yang sudah diterima:</span> <br/>{formData.kesimpulan.catatanPemanfaatan || '........................................................................................................................'}</li>
+                   <li><span className="font-semibold">Tautan (Link) G-Drive Dokumentasi Bukti Fisik:</span> <br/><span className="text-blue-800 underline">{formData.kesimpulan.linkDrive || '........................................................................................................................'}</span></li>
+                </ul>
+             </li>
+             <li className="break-inside-avoid">
+                <span className="font-bold">Kesimpulan Uji Kelayakan:</span><br/>
+                Berdasarkan verifikasi administrasi dan observasi lapangan yang dilaksanakan, maka Satuan Pendidikan ini dinyatakan:
+                <div className="mt-3 space-y-3 ml-2">
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[{formData.kesimpulan.statusKelayakan === 'SANGAT SIAP DAN MEMENUHI SYARAT' ? '✓' : '  '}]</span> 
+                      <span><span className="font-bold">SANGAT SIAP DAN MEMENUHI SYARAT</span><br/>(Direkomendasikan segera ditetapkan sebagai Penerima Bantuan Tahun 2026).</span>
+                   </div>
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[{formData.kesimpulan.statusKelayakan === 'SIAP DENGAN CATATAN PENGKONDISIAN KHUSUS' ? '✓' : '  '}]</span> 
+                      <span><span className="font-bold">SIAP DENGAN CATATAN PENGKONDISIAN KHUSUS</span><br/>(Dapat ditetapkan, asalkan sekolah segera menyelesaikan catatan perbaikan di atas dalam waktu yang ditentukan).</span>
+                   </div>
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[{formData.kesimpulan.statusKelayakan === 'TIDAK SIAP / TIDAK MEMENUHI SYARAT' ? '✓' : '  '}]</span> 
+                      <span><span className="font-bold">TIDAK SIAP / TIDAK MEMENUHI SYARAT</span><br/>(Tidak direkomendasikan karena terkendala sengketa lahan / infrastruktur rusak berat yang belum terakomodasi rehab / ketidaksesuaian data fatal).</span>
+                   </div>
+                </div>
+                
+                <div className="mt-4">
+                   <span className="font-semibold">Catatan Khusus Kesimpulan:</span><br/>
+                   <p className="mt-1">{formData.kesimpulan.catatanKelayakan || '....................................................................................................................................................................................'}</p>
+                </div>
+             </li>
+           </ol>
+        </div>
+
+      </div>
+      {/* END TAMPILAN CETAK PDF */}
+
+      {/* Footer Copyright Web */}
       <footer className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 print:hidden relative z-10 pb-4">
         <p>Copyright &copy; 2026 by Meldi Chaniko</p>
         <p>Mail to: <a href="mailto:meldi.chaniko@gmail.com" className="text-[#067ac1] dark:text-[#f9a703] hover:underline transition">meldi.chaniko@gmail.com</a></p>
