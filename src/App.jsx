@@ -48,11 +48,12 @@ export default function App() {
       rombelDapodik: '', rombelFakta: '',
       ruangDapodik: '', ruangFakta: '',
       analisisIfp: '', rekomendasiIfp: '',
-      listrikDaya: '', listrikAsumsi: '', listrikKesimpulan: '',
+      listrikDaya: '', listrikAsumsi: '', 
+      listrikKesimpulanOpsi: '', listrikKesimpulan: '', // Penambahan state opsi manual listrik
       internetStatus: '', internetProvider: '',
-      ruangKondisiCheckbox: [], // Array untuk multi-select (Checkbox)
-      ruangKondisiLainnya: '',  // Teks khusus jika pilih "Lainnya"
-      ruangKondisi: '',         // Untuk dikirim ke Server (gabungan teks)
+      ruangKondisiCheckbox: [],
+      ruangKondisiLainnya: '',
+      ruangKondisi: '',
       ruangKesimpulan: ''
     },
     kesimpulan: {
@@ -125,6 +126,19 @@ export default function App() {
     });
   };
 
+  // Handler Khusus Manual Kesimpulan Listrik
+  const handleListrikKesimpulanOpsi = (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      digitalisasi: {
+        ...prev.digitalisasi,
+        listrikKesimpulanOpsi: value,
+        listrikKesimpulan: value !== 'Lainnya' ? value : '' 
+      }
+    }));
+  };
+
   const handleKesimpulanChange = (e) => {
     setFormData({ ...formData, kesimpulan: { ...formData.kesimpulan, [e.target.name]: e.target.value } });
   };
@@ -142,14 +156,15 @@ export default function App() {
       case 'Bagian II.B':
         return formData.lahan.every(item => item.status !== '');
       case 'Bagian II.C':
-        const keysDigi = ['rombelDapodik', 'rombelFakta', 'ruangDapodik', 'ruangFakta', 'analisisIfp', 'rekomendasiIfp', 'listrikDaya', 'listrikAsumsi', 'listrikKesimpulan', 'internetStatus', 'internetProvider', 'ruangKesimpulan'];
+        const keysDigi = ['rombelDapodik', 'rombelFakta', 'ruangDapodik', 'ruangFakta', 'analisisIfp', 'rekomendasiIfp', 'listrikDaya', 'listrikAsumsi', 'internetStatus', 'internetProvider', 'ruangKesimpulan'];
         const isBasicFilled = keysDigi.every(k => formData.digitalisasi[k].trim() !== '');
         
-        // Validasi Checkbox
+        const isListrikKesimpulanValid = formData.digitalisasi.listrikKesimpulanOpsi === 'Lainnya' ? formData.digitalisasi.listrikKesimpulan.trim() !== '' : formData.digitalisasi.listrikKesimpulanOpsi !== '';
+        
         const hasChecked = formData.digitalisasi.ruangKondisiCheckbox.length > 0;
         const isLainnyaValid = formData.digitalisasi.ruangKondisiCheckbox.includes('Lainnya') ? formData.digitalisasi.ruangKondisiLainnya.trim() !== '' : true;
         
-        return isBasicFilled && hasChecked && isLainnyaValid;
+        return isBasicFilled && isListrikKesimpulanValid && hasChecked && isLainnyaValid;
       case 'Bagian III':
         for (let key in formData.kesimpulan) {
           if (formData.kesimpulan[key].trim() === '') return false;
@@ -177,11 +192,22 @@ export default function App() {
     const savedData = localStorage.getItem(`draft_${npsn}`);
     if (savedData) {
       let parsedData = JSON.parse(savedData);
-      // Kompatibilitas untuk draf lama (Sebelum fitur checkbox)
+      
+      // Kompatibilitas draf lama untuk ruang kondisi
       if (!parsedData.digitalisasi.ruangKondisiCheckbox) {
          parsedData.digitalisasi.ruangKondisiCheckbox = [];
          parsedData.digitalisasi.ruangKondisiLainnya = '';
       }
+      // Kompatibilitas draf lama untuk opsi kesimpulan listrik manual
+      if (parsedData.digitalisasi.listrikKesimpulan && !parsedData.digitalisasi.listrikKesimpulanOpsi) {
+         const optsListrik = ["Memadai", "Perlu Tambah Daya PLN", "Butuh Panel Surya"];
+         if (optsListrik.includes(parsedData.digitalisasi.listrikKesimpulan)) {
+             parsedData.digitalisasi.listrikKesimpulanOpsi = parsedData.digitalisasi.listrikKesimpulan;
+         } else {
+             parsedData.digitalisasi.listrikKesimpulanOpsi = 'Lainnya';
+         }
+      }
+
       setFormData(parsedData);
       alert(`Data draft lokal untuk NPSN ${npsn} berhasil dimuat.`);
     } else {
@@ -201,7 +227,8 @@ export default function App() {
       if (data.status === 'not_found') {
         alert(`Data dengan NPSN ${npsn} belum pernah dikirim/tidak ditemukan di Server.`);
       } else if (data.profil) {
-        // Ekstrak string data lama kembali menjadi Checkbox saat ditarik dari server
+        
+        // Kompatibilitas untuk draf lama (Sebelum fitur checkbox)
         if (!data.digitalisasi.ruangKondisiCheckbox) {
              data.digitalisasi.ruangKondisiCheckbox = [];
              data.digitalisasi.ruangKondisiLainnya = '';
@@ -221,6 +248,17 @@ export default function App() {
                data.digitalisasi.ruangKondisiCheckbox = parsedChecks;
              }
         }
+
+        // Kompatibilitas draf lama untuk opsi kesimpulan listrik manual
+        if (data.digitalisasi.listrikKesimpulan && !data.digitalisasi.listrikKesimpulanOpsi) {
+           const optsListrik = ["Memadai", "Perlu Tambah Daya PLN", "Butuh Panel Surya"];
+           if (optsListrik.includes(data.digitalisasi.listrikKesimpulan)) {
+               data.digitalisasi.listrikKesimpulanOpsi = data.digitalisasi.listrikKesimpulan;
+           } else {
+               data.digitalisasi.listrikKesimpulanOpsi = 'Lainnya';
+           }
+        }
+
         setFormData(data); 
         alert(`Berhasil menarik data NPSN ${npsn} dari Google Sheets!`);
       }
@@ -239,7 +277,6 @@ export default function App() {
     }
     setIsLoading(true);
 
-    // Kloning data untuk dikirim agar tidak mengubah tampilan State
     const payload = JSON.parse(JSON.stringify(formData));
     
     // Proses penggabungan Checkbox menjadi String Text berbatas koma
@@ -247,7 +284,6 @@ export default function App() {
     if (payload.digitalisasi.ruangKondisiCheckbox.includes('Lainnya') && payload.digitalisasi.ruangKondisiLainnya.trim() !== '') {
        keamananArr.push(payload.digitalisasi.ruangKondisiLainnya.trim());
     }
-    // Teks inilah yang akan masuk dengan rapi ke Spreadsheet Anda
     payload.digitalisasi.ruangKondisi = keamananArr.join(', ');
 
     try {
@@ -285,14 +321,14 @@ export default function App() {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} print:bg-white print:text-black font-sans relative z-0`}>
       
-      {/* Latar Belakang Pattern (Hanya Tampil di Web) */}
+      {/* Latar Belakang Pattern */}
       <div 
         className="fixed inset-0 z-[-1] opacity-[0.08] dark:opacity-[0.15] dark:invert pointer-events-none print:hidden"
         style={{ backgroundImage: "url('/Pattern.png')", backgroundRepeat: 'repeat', backgroundSize: '250px' }}
       ></div>
 
       {/* ========================================================================= */}
-      {/* TAMPILAN WEB FORM (INTERAKTIF) - Disembunyikan saat di-print (print:hidden) */}
+      {/* TAMPILAN WEB FORM (INTERAKTIF) */}
       {/* ========================================================================= */}
       <div className="max-w-5xl mx-auto bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden transition-colors duration-300 relative border-t-8 border-[#f9a703] z-10 my-4 md:my-8 print:hidden">
         
@@ -527,16 +563,23 @@ export default function App() {
                         <option value="2200 VA">2200 VA</option>
                         <option value="3500 VA">3500 VA</option>
                         <option value="Diatas 3500 VA">Diatas 3500 VA</option>
+                        <option value="Sekolah tidak menginput daya listrik pada dapodik">Sekolah tidak menginput daya listrik pada dapodik</option>
                       </select>
                       
                       <label className="block text-sm font-semibold mb-1">b. Asumsi Beban Penambahan Daya <span className="text-red-500">*</span></label>
                       <input type="text" name="listrikAsumsi" value={formData.digitalisasi.listrikAsumsi} placeholder="Analisis asumsi daya..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
-                      <select name="listrikKesimpulan" value={formData.digitalisasi.listrikKesimpulan} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleDigiChange}>
+                      
+                      {/* OPSI KESIMPULAN LISTRIK DENGAN MANUAL */}
+                      <select name="listrikKesimpulanOpsi" value={formData.digitalisasi.listrikKesimpulanOpsi} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleListrikKesimpulanOpsi}>
                         <option value="">-- Kesimpulan Listrik --</option>
                         <option value="Memadai">Memadai</option>
                         <option value="Perlu Tambah Daya PLN">Perlu Tambah Daya PLN</option>
                         <option value="Butuh Panel Surya">Butuh Panel Surya</option>
+                        <option value="Lainnya">Lainnya (Isi Manual)</option>
                       </select>
+                      {formData.digitalisasi.listrikKesimpulanOpsi === 'Lainnya' && (
+                        <input type="text" name="listrikKesimpulan" value={formData.digitalisasi.listrikKesimpulan} placeholder="Ketik manual kesimpulan listrik..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mt-2" onChange={handleDigiChange}/>
+                      )}
                     </div>
                     <div>
                       <div className="flex gap-2 mb-3">
@@ -548,6 +591,7 @@ export default function App() {
                               <option value="Seluler (Telkomsel/XL/dll)">Jaringan Seluler</option>
                               <option value="Satelit / VSAT">Satelit / VSAT</option>
                               <option value="Blank Spot (Tidak Ada Sinyal)">Blank Spot</option>
+                              <option value="Sekolah tidak menginput jaringan internet pada dapodik">Sekolah tidak menginput jaringan internet pada dapodik</option>
                            </select>
                         </div>
                         <div className="w-1/2">
@@ -557,7 +601,6 @@ export default function App() {
                       </div>
 
                       <label className="block text-sm font-semibold mb-1">d. Kondisi Ruang Penyimpanan <span className="text-red-500">*</span></label>
-                      {/* Checkbox Multi-Select untuk Ruangan */}
                       <div className="mb-2 space-y-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 p-3">
                         {[
                           "Gembok Ganda & Teralis Besi",
@@ -579,7 +622,6 @@ export default function App() {
                         ))}
                       </div>
                       
-                      {/* Kolom Teks Manual (Muncul jika "Lainnya" dicentang) */}
                       {formData.digitalisasi.ruangKondisiCheckbox.includes('Lainnya') && (
                         <input type="text" name="ruangKondisiLainnya" value={formData.digitalisasi.ruangKondisiLainnya} placeholder="Ketik manual fasilitas keamanan lainnya..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
                       )}
@@ -626,7 +668,8 @@ export default function App() {
                 <textarea name="catatanKeamanan" value={formData.kesimpulan.catatanKeamanan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan keamanan... (Isi '-' jika tidak ada)"></textarea>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">d. Aspek Pemanfaatan bantuan yang sudah diterima: <span className="text-red-500">*</span></label>
+                {/* PENAMBAHAN TEXT DETAIL BANTUAN DI LABEL */}
+                <label className="block text-sm font-medium mb-1">d. Aspek Pemanfaatan bantuan yang sudah diterima <span className="font-normal text-gray-500">(bantuan digitalisasi 2025 berupa IFP, Laptop, dan Hardisk eksternal)</span>: <span className="text-red-500">*</span></label>
                 <textarea name="catatanPemanfaatan" value={formData.kesimpulan.catatanPemanfaatan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan pemanfaatan bantuan... (Isi '-' jika tidak ada)"></textarea>
               </div>
               <div>
@@ -679,7 +722,7 @@ export default function App() {
 
 
       {/* ========================================================================= */}
-      {/* TAMPILAN CETAK PDF (NARATIF) - Hanya tampil saat diprint (hidden print:block) */}
+      {/* TAMPILAN CETAK PDF (NARATIF) */}
       {/* ========================================================================= */}
       <div className="hidden print:block font-serif w-full max-w-none text-black bg-white pt-4 pb-12 px-8 text-[11pt] leading-snug">
         
@@ -800,7 +843,8 @@ export default function App() {
                    <li><span className="font-semibold">Aspek Administrasi & Lahan:</span> <br/>{formData.kesimpulan.catatanAdmin || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Aspek Kelistrikan & Jaringan:</span> <br/>{formData.kesimpulan.catatanListrik || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Aspek Keamanan Ruang & SDM:</span> <br/>{formData.kesimpulan.catatanKeamanan || '........................................................................................................................'}</li>
-                   <li><span className="font-semibold">Aspek Pemanfaatan bantuan yang sudah diterima:</span> <br/>{formData.kesimpulan.catatanPemanfaatan || '........................................................................................................................'}</li>
+                   {/* PENYESUAIAN TEKS PADA HASIL CETAK PDF JUGA */}
+                   <li><span className="font-semibold">Aspek Pemanfaatan bantuan yang sudah diterima (bantuan digitalisasi 2025 berupa IFP, Laptop, dan Hardisk Eksternal):</span> <br/>{formData.kesimpulan.catatanPemanfaatan || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Tautan (Link) G-Drive Dokumentasi Bukti Fisik:</span> <br/><span className="text-blue-800 underline">{formData.kesimpulan.linkDrive || '........................................................................................................................'}</span></li>
                 </ul>
              </li>
