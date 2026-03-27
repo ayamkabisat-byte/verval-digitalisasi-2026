@@ -30,7 +30,7 @@ const wilayahMap = {
 const provinsiList = Object.keys(wilayahMap);
 
 // URL Script Google
-const scriptURL = 'https://script.google.com/macros/s/AKfycbxoC2TjU71W1ya6xL7b47zx8zUqg8ipy9nuXjwDaTJzSTmSX1IAf0g6PgDbl9hzsKU9KQ/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycby5g96JFAS8TlixEr1yA1n-TyztfhfIwvgd6NQeAYKAbnj841VHQE9zQ2cypcnbLVp1OQ/exec';
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
