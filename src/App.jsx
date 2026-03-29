@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload, Link, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
+import { FileText, Printer, Save, AlertCircle, Moon, Sun, Send, Search, Loader2, CloudDownload, Link, CheckCircle, ChevronRight, ChevronLeft, FileDown } from 'lucide-react';
 
 const adminQuestions = [
   "Satuan pendidikan memiliki Nomor Pokok Sekolah Nasional (NPSN) yang aktif dan sinkron.",
@@ -30,13 +30,14 @@ const wilayahMap = {
 const provinsiList = Object.keys(wilayahMap);
 
 // URL Script Google
-const scriptURL = 'https://script.google.com/macros/s/AKfycby5g96JFAS8TlixEr1yA1n-TyztfhfIwvgd6NQeAYKAbnj841VHQE9zQ2cypcnbLVp1OQ/exec';
+const scriptURL = 'https://script.google.com/macros/s/AKfycbxoC2TjU71W1ya6xL7b47zx8zUqg8ipy9nuXjwDaTJzSTmSX1IAf0g6PgDbl9hzsKU9KQ/exec';
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingServer, setIsFetchingServer] = useState(false);
   const [activeTab, setActiveTab] = useState('Bagian I'); 
+  const [printType, setPrintType] = useState('filled');
   
   const initialData = {
     profil: {
@@ -49,7 +50,7 @@ export default function App() {
       ruangDapodik: '', ruangFakta: '',
       analisisIfp: '', rekomendasiIfp: '',
       listrikDaya: '', listrikAsumsi: '', 
-      listrikKesimpulanOpsi: '', listrikKesimpulan: '', // Penambahan state opsi manual listrik
+      listrikKesimpulanOpsi: '', listrikKesimpulan: '',
       internetStatus: '', internetProvider: '',
       ruangKondisiCheckbox: [],
       ruangKondisiLainnya: '',
@@ -106,7 +107,6 @@ export default function App() {
     setFormData({ ...formData, digitalisasi: { ...formData.digitalisasi, [e.target.name]: e.target.value } });
   };
 
-  // Handler Khusus Checkbox Fasilitas Keamanan
   const handleRuangKondisiCheckbox = (e) => {
     const { value, checked } = e.target;
     setFormData(prev => {
@@ -126,7 +126,6 @@ export default function App() {
     });
   };
 
-  // Handler Khusus Manual Kesimpulan Listrik
   const handleListrikKesimpulanOpsi = (e) => {
     const value = e.target.value;
     setFormData(prev => ({
@@ -192,13 +191,10 @@ export default function App() {
     const savedData = localStorage.getItem(`draft_${npsn}`);
     if (savedData) {
       let parsedData = JSON.parse(savedData);
-      
-      // Kompatibilitas draf lama untuk ruang kondisi
       if (!parsedData.digitalisasi.ruangKondisiCheckbox) {
          parsedData.digitalisasi.ruangKondisiCheckbox = [];
          parsedData.digitalisasi.ruangKondisiLainnya = '';
       }
-      // Kompatibilitas draf lama untuk opsi kesimpulan listrik manual
       if (parsedData.digitalisasi.listrikKesimpulan && !parsedData.digitalisasi.listrikKesimpulanOpsi) {
          const optsListrik = ["Memadai", "Perlu Tambah Daya PLN", "Butuh Panel Surya"];
          if (optsListrik.includes(parsedData.digitalisasi.listrikKesimpulan)) {
@@ -207,7 +203,6 @@ export default function App() {
              parsedData.digitalisasi.listrikKesimpulanOpsi = 'Lainnya';
          }
       }
-
       setFormData(parsedData);
       alert(`Data draft lokal untuk NPSN ${npsn} berhasil dimuat.`);
     } else {
@@ -227,8 +222,6 @@ export default function App() {
       if (data.status === 'not_found') {
         alert(`Data dengan NPSN ${npsn} belum pernah dikirim/tidak ditemukan di Server.`);
       } else if (data.profil) {
-        
-        // Kompatibilitas untuk draf lama (Sebelum fitur checkbox)
         if (!data.digitalisasi.ruangKondisiCheckbox) {
              data.digitalisasi.ruangKondisiCheckbox = [];
              data.digitalisasi.ruangKondisiLainnya = '';
@@ -248,8 +241,6 @@ export default function App() {
                data.digitalisasi.ruangKondisiCheckbox = parsedChecks;
              }
         }
-
-        // Kompatibilitas draf lama untuk opsi kesimpulan listrik manual
         if (data.digitalisasi.listrikKesimpulan && !data.digitalisasi.listrikKesimpulanOpsi) {
            const optsListrik = ["Memadai", "Perlu Tambah Daya PLN", "Butuh Panel Surya"];
            if (optsListrik.includes(data.digitalisasi.listrikKesimpulan)) {
@@ -258,7 +249,6 @@ export default function App() {
                data.digitalisasi.listrikKesimpulanOpsi = 'Lainnya';
            }
         }
-
         setFormData(data); 
         alert(`Berhasil menarik data NPSN ${npsn} dari Google Sheets!`);
       }
@@ -279,7 +269,6 @@ export default function App() {
 
     const payload = JSON.parse(JSON.stringify(formData));
     
-    // Proses penggabungan Checkbox menjadi String Text berbatas koma
     let keamananArr = payload.digitalisasi.ruangKondisiCheckbox.filter(opt => opt !== 'Lainnya');
     if (payload.digitalisasi.ruangKondisiCheckbox.includes('Lainnya') && payload.digitalisasi.ruangKondisiLainnya.trim() !== '') {
        keamananArr.push(payload.digitalisasi.ruangKondisiLainnya.trim());
@@ -301,17 +290,19 @@ export default function App() {
     }
   };
 
-  const handlePrint = () => {
-    try {
-      window.print();
-    } catch (e) {
-      alert("Gunakan CTRL + P (Windows) atau CMD + P (Mac) untuk mencetak dokumen ini.");
-    }
+  const handlePrint = (type) => {
+    setPrintType(type);
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch (e) {
+        alert("Gunakan CTRL + P (Windows) atau CMD + P (Mac) untuk mencetak dokumen ini.");
+      }
+    }, 100);
   };
 
   const tabs = ['Bagian I', 'Bagian II.A', 'Bagian II.B', 'Bagian II.C', 'Bagian III'];
 
-  // Merakit teks List Keamanan khusus untuk PDF Cetak
   let keamananPrint = formData.digitalisasi.ruangKondisiCheckbox.filter(opt => opt !== 'Lainnya');
   if (formData.digitalisasi.ruangKondisiCheckbox.includes('Lainnya') && formData.digitalisasi.ruangKondisiLainnya.trim()) {
      keamananPrint.push(formData.digitalisasi.ruangKondisiLainnya.trim());
@@ -569,7 +560,6 @@ export default function App() {
                       <label className="block text-sm font-semibold mb-1">b. Asumsi Beban Penambahan Daya <span className="text-red-500">*</span></label>
                       <input type="text" name="listrikAsumsi" value={formData.digitalisasi.listrikAsumsi} placeholder="Analisis asumsi daya..." className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] mb-2" onChange={handleDigiChange}/>
                       
-                      {/* OPSI KESIMPULAN LISTRIK DENGAN MANUAL */}
                       <select name="listrikKesimpulanOpsi" value={formData.digitalisasi.listrikKesimpulanOpsi} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1]" onChange={handleListrikKesimpulanOpsi}>
                         <option value="">-- Kesimpulan Listrik --</option>
                         <option value="Memadai">Memadai</option>
@@ -668,7 +658,6 @@ export default function App() {
                 <textarea name="catatanKeamanan" value={formData.kesimpulan.catatanKeamanan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan keamanan... (Isi '-' jika tidak ada)"></textarea>
               </div>
               <div>
-                {/* PENAMBAHAN TEXT DETAIL BANTUAN DI LABEL */}
                 <label className="block text-sm font-medium mb-1">d. Aspek Pemanfaatan bantuan yang sudah diterima <span className="font-normal text-gray-500">(bantuan digitalisasi 2025 berupa IFP, Laptop, dan Hardisk eksternal)</span>: <span className="text-red-500">*</span></label>
                 <textarea name="catatanPemanfaatan" value={formData.kesimpulan.catatanPemanfaatan} className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-[#067ac1] focus:border-[#067ac1] min-h-[120px] resize-y" onChange={handleKesimpulanChange} placeholder="Tuliskan catatan pemanfaatan bantuan... (Isi '-' jika tidak ada)"></textarea>
               </div>
@@ -710,8 +699,11 @@ export default function App() {
           <button onClick={handleSaveDraft} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition font-medium disabled:opacity-50">
             <Save size={18} className="mr-2" /> Simpan Draft
           </button>
-          <button onClick={handlePrint} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-[#f9a703] text-white rounded-lg hover:bg-[#e09602] transition font-medium disabled:opacity-50 shadow-md">
-            <Printer size={18} className="mr-2" /> Cetak PDF
+          <button onClick={() => handlePrint('blank')} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium disabled:opacity-50 shadow-md">
+            <FileDown size={18} className="mr-2" /> Cetak Blanko Offline
+          </button>
+          <button onClick={() => handlePrint('filled')} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-[#f9a703] text-white rounded-lg hover:bg-[#e09602] transition font-medium disabled:opacity-50 shadow-md">
+            <Printer size={18} className="mr-2" /> Cetak PDF (Terisi)
           </button>
           <button onClick={handleSubmit} disabled={isLoading || isFetchingServer} className="flex items-center px-4 md:px-6 py-2 bg-[#067ac1] text-white rounded-lg hover:bg-[#056099] transition font-medium disabled:opacity-50 shadow-md">
             <Send size={18} className="mr-2" /> {isLoading ? "Mengirim..." : "Kirim ke Google Sheets"}
@@ -722,9 +714,9 @@ export default function App() {
 
 
       {/* ========================================================================= */}
-      {/* TAMPILAN CETAK PDF (NARATIF) */}
+      {/* TAMPILAN CETAK PDF (NARATIF TERISI) */}
       {/* ========================================================================= */}
-      <div className="hidden print:block font-serif w-full max-w-none text-black bg-white pt-4 pb-12 px-8 text-[11pt] leading-snug">
+      <div className={`${printType === 'filled' ? 'hidden print:block' : 'hidden'} font-serif w-full max-w-none text-black bg-white pt-4 pb-12 px-8 text-[11pt] leading-snug`}>
         
         {/* Kop Surat Dokumen Cetak */}
         <div className="border-b-4 border-black pb-4 mb-4 text-center">
@@ -843,7 +835,6 @@ export default function App() {
                    <li><span className="font-semibold">Aspek Administrasi & Lahan:</span> <br/>{formData.kesimpulan.catatanAdmin || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Aspek Kelistrikan & Jaringan:</span> <br/>{formData.kesimpulan.catatanListrik || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Aspek Keamanan Ruang & SDM:</span> <br/>{formData.kesimpulan.catatanKeamanan || '........................................................................................................................'}</li>
-                   {/* PENYESUAIAN TEKS PADA HASIL CETAK PDF JUGA */}
                    <li><span className="font-semibold">Aspek Pemanfaatan bantuan yang sudah diterima (bantuan digitalisasi 2025 berupa IFP, Laptop, dan Hardisk Eksternal):</span> <br/>{formData.kesimpulan.catatanPemanfaatan || '........................................................................................................................'}</li>
                    <li><span className="font-semibold">Tautan (Link) G-Drive Dokumentasi Bukti Fisik:</span> <br/><span className="text-blue-800 underline">{formData.kesimpulan.linkDrive || '........................................................................................................................'}</span></li>
                 </ul>
@@ -875,7 +866,197 @@ export default function App() {
         </div>
 
       </div>
-      {/* END TAMPILAN CETAK PDF */}
+      {/* END TAMPILAN CETAK PDF TERISI */}
+
+      {/* ========================================================================= */}
+      {/* TAMPILAN CETAK PDF (BLANKO OFFLINE) */}
+      {/* ========================================================================= */}
+      <div className={`${printType === 'blank' ? 'hidden print:block' : 'hidden'} font-serif w-full max-w-none text-black bg-white pt-4 pb-12 px-8 text-[11pt] leading-snug`}>
+        
+        {/* Kop Surat Dokumen Cetak Blanko */}
+        <div className="border-b-4 border-black pb-4 mb-4 text-center">
+           <img src="/Header Itjen Kemendikdasmen.png" alt="Header Kemendikdasmen" className="h-20 mx-auto object-contain mb-3" />
+           <h1 className="text-[13pt] font-bold uppercase">INSTRUMEN VERIFIKASI KESIAPAN SATUAN PENDIDIKAN</h1>
+           <h2 className="text-[12pt] font-bold uppercase">CALON PENERIMA BANTUAN REVITALISASI & DIGITALISASI TAHUN 2026</h2>
+        </div>
+
+        {/* Bagian I - Cetak Blanko */}
+        <h3 className="font-bold text-[12pt] mb-2 uppercase">BAGIAN I: PROFIL DAN DATA UMUM SATUAN PENDIDIKAN</h3>
+        <table className="w-full mb-6 text-[11pt]">
+          <tbody>
+            <tr><td className="w-1/3 py-1.5 align-top">NPSN</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Nama Satuan Pendidikan</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Jenjang Pendidikan</td><td className="w-2/3 py-1.5 align-top">: [ &nbsp;&nbsp; ] PAUD &nbsp;&nbsp;&nbsp;&nbsp; [ &nbsp;&nbsp; ] SD &nbsp;&nbsp;&nbsp;&nbsp; [ &nbsp;&nbsp; ] SMP &nbsp;&nbsp;&nbsp;&nbsp; [ &nbsp;&nbsp; ] SMA</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Provinsi</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Kabupaten / Kota</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Alamat Lengkap Satuan Pendidikan</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Nama Kepala Sekolah</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">No. HP / WhatsApp Kepala Sekolah</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Nama Petugas Verifikasi</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+            <tr><td className="w-1/3 py-1.5 align-top">Tanggal Verifikasi</td><td className="w-2/3 py-1.5 align-top">: ........................................................................................................</td></tr>
+          </tbody>
+        </table>
+
+        {/* Bagian II.A - Cetak Blanko */}
+        <h3 className="font-bold text-[12pt] mb-1 uppercase break-before-auto">BAGIAN II: VERIFIKASI KESIAPAN SASARAN (PRA-PELAKSANAAN)</h3>
+        <h4 className="font-bold mb-2 mt-3">A. Kelayakan Administrasi Umum dan Ekosistem Kelembagaan</h4>
+        <p className="italic text-[10pt] mb-2">*Berikan tanda centang (✓) pada kolom yang sesuai.</p>
+        <table className="w-full border-collapse border border-black mb-6 text-[10pt]">
+          <thead>
+            <tr>
+              <th className="border border-black p-1.5 w-8 text-center">No</th>
+              <th className="border border-black p-1.5 w-1/2">Indikator Pemeriksaan Kelayakan Administrasi</th>
+              <th className="border border-black p-1.5 w-12 text-center">Ya</th>
+              <th className="border border-black p-1.5 w-12 text-center">Tidak</th>
+              <th className="border border-black p-1.5">Keterangan / Bukti Fisik</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adminQuestions.map((q, idx) => (
+              <tr key={idx} className="break-inside-avoid">
+                <td className="border border-black p-1.5 text-center align-top">{idx + 1}</td>
+                <td className="border border-black p-1.5 align-top">{q}</td>
+                <td className="border border-black p-1.5 text-center align-middle">[ &nbsp;&nbsp; ]</td>
+                <td className="border border-black p-1.5 text-center align-middle">[ &nbsp;&nbsp; ]</td>
+                <td className="border border-black p-1.5 align-bottom text-gray-300">......................................................</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Bagian II.B - Cetak Blanko */}
+        <h4 className="font-bold mb-2 break-before-auto">B. Verifikasi Lahan, Tata Ruang, dan Kesiapan Swakelola (Fokus Bantuan Fisik/Revitalisasi)</h4>
+        <table className="w-full border-collapse border border-black mb-6 text-[10pt]">
+          <thead>
+            <tr>
+              <th className="border border-black p-1.5 w-8 text-center">No</th>
+              <th className="border border-black p-1.5 w-1/2">Indikator Pemeriksaan Lahan, Fisik, dan Swakelola</th>
+              <th className="border border-black p-1.5 w-12 text-center">Ya</th>
+              <th className="border border-black p-1.5 w-12 text-center">Tidak</th>
+              <th className="border border-black p-1.5">Analisis Lapangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lahanQuestions.map((q, idx) => (
+              <tr key={idx} className="break-inside-avoid">
+                <td className="border border-black p-1.5 text-center align-top">{idx + 1}</td>
+                <td className="border border-black p-1.5 align-top">{q}</td>
+                <td className="border border-black p-1.5 text-center align-middle">[ &nbsp;&nbsp; ]</td>
+                <td className="border border-black p-1.5 text-center align-middle">[ &nbsp;&nbsp; ]</td>
+                <td className="border border-black p-1.5 align-bottom text-gray-300">......................................................</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Bagian II.C - Cetak Blanko */}
+        <div className="break-inside-avoid">
+           <h4 className="font-bold mb-1">C. Analisis Pemetaan Kebutuhan Digitalisasi (IFP) dan Kapasitas Infrastruktur Kelistrikan</h4>
+           
+           <ol className="list-decimal ml-5 mb-6 space-y-3">
+             <li>
+                <span className="font-bold">Pemetaan Kuota Hak Interactive Flat Panel (IFP)</span>
+                <ul className="list-none mt-2 space-y-2">
+                   <li>• Jumlah Rombel Aktif : Dapodik (...........) &nbsp;|&nbsp; Fakta di Lapangan (...........)</li>
+                   <li>• Jumlah Ruang Kelas Layak : Dapodik (...........) &nbsp;|&nbsp; Fakta di Lapangan (...........)</li>
+                   <li>• Analisis Kebutuhan IFP : .......................................................................................................................</li>
+                   <li>• Rekomendasi Unit IFP : ..........................................................................................................................</li>
+                </ul>
+             </li>
+             <li>
+                <span className="font-bold">Kesiapan Ekosistem Pendukung Digitalisasi</span>
+                <ul className="list-none mt-2 space-y-2">
+                   <li>• Kapasitas Daya Listrik (VA) : <br/>
+                     <span className="inline-block mt-1 leading-loose">
+                       [ &nbsp;&nbsp; ] Tidak ada listrik &nbsp;&nbsp; [ &nbsp;&nbsp; ] 450 VA &nbsp;&nbsp; [ &nbsp;&nbsp; ] 900 VA &nbsp;&nbsp; [ &nbsp;&nbsp; ] 1300 VA &nbsp;&nbsp; [ &nbsp;&nbsp; ] 2200 VA <br/>
+                       [ &nbsp;&nbsp; ] 3500 VA &nbsp;&nbsp; [ &nbsp;&nbsp; ] Diatas 3500 VA &nbsp;&nbsp; [ &nbsp;&nbsp; ] Sekolah tdk input di Dapodik
+                     </span>
+                   </li>
+                   <li>• Asumsi Beban Tambahan Daya : .........................................................................................................</li>
+                   <li>• Kesimpulan Listrik : <br/>
+                     <span className="inline-block mt-1 leading-loose">
+                       [ &nbsp;&nbsp; ] Memadai &nbsp;&nbsp; [ &nbsp;&nbsp; ] Perlu Tambah Daya PLN &nbsp;&nbsp; [ &nbsp;&nbsp; ] Butuh Panel Surya <br/>
+                       [ &nbsp;&nbsp; ] Lainnya: .....................................................
+                     </span>
+                   </li>
+                   <li>• Status Internet : <br/>
+                     <span className="inline-block mt-1 leading-loose">
+                       [ &nbsp;&nbsp; ] Kabel Fiber Optik &nbsp;&nbsp; [ &nbsp;&nbsp; ] Jaringan Seluler &nbsp;&nbsp; [ &nbsp;&nbsp; ] Satelit / VSAT &nbsp;&nbsp; [ &nbsp;&nbsp; ] Blank Spot <br/>
+                       [ &nbsp;&nbsp; ] Sekolah tdk input di Dapodik
+                     </span>
+                   </li>
+                   <li>• Provider & Kecepatan : ........................................................................................................................</li>
+                   <li>• Kondisi Ruang Penyimpanan Barang Digital (Bisa pilih &gt; 1): <br/>
+                     <div className="grid grid-cols-2 gap-3 mt-2 w-[90%]">
+                        <div>[ &nbsp;&nbsp; ] Gembok Ganda & Teralis Besi</div>
+                        <div>[ &nbsp;&nbsp; ] Atap Aman (Tidak Bocor/Rawan)</div>
+                        <div>[ &nbsp;&nbsp; ] Terdapat CCTV Aktif</div>
+                        <div>[ &nbsp;&nbsp; ] Dijaga Penjaga Sekolah / Satpam</div>
+                     </div>
+                     <div className="mt-3">[ &nbsp;&nbsp; ] Lainnya: ....................................................................................................................</div>
+                   </li>
+                   <li>• Kesimpulan Ruang : &nbsp;&nbsp; [ &nbsp;&nbsp; ] Aman &nbsp;&nbsp; [ &nbsp;&nbsp; ] Cukup &nbsp;&nbsp; [ &nbsp;&nbsp; ] Rawan</li>
+                </ul>
+             </li>
+           </ol>
+        </div>
+
+        {/* Bagian III - Cetak Blanko */}
+        <div className="break-before-auto">
+           <h3 className="font-bold text-[12pt] mb-2 uppercase mt-4">BAGIAN III: CATATAN KENDALA, KESIMPULAN, DAN REKOMENDASI VERIFIKATOR</h3>
+           
+           <ol className="list-decimal ml-5 mb-6 space-y-4">
+             <li>
+                <span className="font-bold">Deskripsi Catatan Lapangan / Kendala Kesiapan Ekosistem:</span>
+                <ul className="list-[lower-alpha] ml-5 mt-2 space-y-4">
+                   <li><span className="font-semibold">Aspek Administrasi & Lahan:</span> <br/><span className="text-gray-400">..........................................................................................................................................................................................<br/>..........................................................................................................................................................................................</span></li>
+                   <li><span className="font-semibold">Aspek Kelistrikan & Jaringan:</span> <br/><span className="text-gray-400">..........................................................................................................................................................................................<br/>..........................................................................................................................................................................................</span></li>
+                   <li><span className="font-semibold">Aspek Keamanan Ruang & SDM:</span> <br/><span className="text-gray-400">..........................................................................................................................................................................................<br/>..........................................................................................................................................................................................</span></li>
+                   <li><span className="font-semibold">Aspek Pemanfaatan bantuan yang sudah diterima (Digitalisasi 2025: IFP, Laptop, HDD):</span> <br/><span className="text-gray-400">..........................................................................................................................................................................................<br/>..........................................................................................................................................................................................</span></li>
+                   <li><span className="font-semibold">Tautan (Link) G-Drive Dokumentasi Bukti Fisik:</span> <br/><span className="text-gray-400">..........................................................................................................................................................................................</span></li>
+                </ul>
+             </li>
+             <li className="break-inside-avoid">
+                <span className="font-bold">Kesimpulan Uji Kelayakan:</span><br/>
+                <span className="italic text-[10pt]">Berdasarkan verifikasi administrasi dan observasi lapangan yang dilaksanakan, maka Satuan Pendidikan ini dinyatakan:</span>
+                <div className="mt-4 space-y-4 ml-2">
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[ &nbsp;&nbsp;&nbsp; ]</span> 
+                      <span><span className="font-bold">SANGAT SIAP DAN MEMENUHI SYARAT</span><br/>(Direkomendasikan segera ditetapkan sebagai Penerima Bantuan Tahun 2026).</span>
+                   </div>
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[ &nbsp;&nbsp;&nbsp; ]</span> 
+                      <span><span className="font-bold">SIAP DENGAN CATATAN PENGKONDISIAN KHUSUS</span><br/>(Dapat ditetapkan, asalkan sekolah segera menyelesaikan catatan perbaikan di atas dalam waktu yang ditentukan).</span>
+                   </div>
+                   <div className="flex items-start">
+                      <span className="mr-3 font-sans font-bold">[ &nbsp;&nbsp;&nbsp; ]</span> 
+                      <span><span className="font-bold">TIDAK SIAP / TIDAK MEMENUHI SYARAT</span><br/>(Tidak direkomendasikan karena terkendala sengketa lahan / infrastruktur rusak berat yang belum terakomodasi rehab / ketidaksesuaian data fatal).</span>
+                   </div>
+                </div>
+                
+                <div className="mt-8">
+                   <span className="font-semibold">Catatan Khusus Kesimpulan:</span><br/>
+                   <p className="mt-3 leading-relaxed text-gray-400">.....................................................................................................................................................................................................................<br/>.....................................................................................................................................................................................................................<br/>.....................................................................................................................................................................................................................</p>
+                </div>
+             </li>
+           </ol>
+
+           <div className="mt-16 w-full flex justify-between px-10 text-center break-inside-avoid">
+              <div>
+                 <p className="mb-24">Pihak Sekolah (Kepala Sekolah),</p>
+                 <p className="font-bold">___________________________</p>
+                 <p>NIP. </p>
+              </div>
+              <div>
+                 <p className="mb-24">Petugas Verifikator,</p>
+                 <p className="font-bold">___________________________</p>
+                 <p>NIP. </p>
+              </div>
+           </div>
+        </div>
+
+      </div>
+      {/* END TAMPILAN CETAK BLANKO */}
 
       {/* Footer Copyright Web */}
       <footer className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 print:hidden relative z-10 pb-4">
