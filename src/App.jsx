@@ -18,12 +18,16 @@ const lahanQuestions = [
 ];
 
 const wilayahMap = {
-  "Jawa Barat": ["Kota Bekasi", "Kab. Ciamis"],
+  "Jawa Barat": ["Kota Bekasi", "Kab. Ciamis", "Kota Cirebon"],
   "Jawa Tengah": ["Kab. Klaten", "Kab. Wonosobo"],
   "Jawa Timur": ["Kab. Ngawi"],
-  "Kalimantan Barat": ["Kab. Sambas"],
+  "Kalimantan Barat": ["Kab. Sambas", "Kota Pontianak"],
   "Kepulauan Bangka Belitung": ["Kab. Belitung"],
+  "Nusa Tenggara Barat": ["Kab. Lombok Timur"],
+  "DKI Jakarta": ["Kota Jakarta"],
+  "Sumatera Selatan": ["Ogan Ilir"],
   "Papua Barat Daya": ["Kab. Sorong"],
+  "Sulawesi Utara": ["Kota Tomohon"],
   "Sulawesi Tengah": ["Kab. Donggala"]
 };
 
