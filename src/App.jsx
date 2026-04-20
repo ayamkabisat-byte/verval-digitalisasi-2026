@@ -25,7 +25,7 @@ const wilayahMap = {
   "Kepulauan Bangka Belitung": ["Kab. Belitung"],
   "Nusa Tenggara Barat": ["Kab. Lombok Timur"],
   "DKI Jakarta": ["Kota Jakarta"],
-  "Sumatera Selatan": ["Ogan Ilir"],
+  "Sumatera Selatan": ["Kab. Ogan Ilir"],
   "Papua Barat Daya": ["Kab. Sorong"],
   "Sulawesi Utara": ["Kota Tomohon"],
   "Sulawesi Tengah": ["Kab. Donggala"]
